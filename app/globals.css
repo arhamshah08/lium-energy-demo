@@ -1,26 +1,178 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* ─────────────────────────────────────────────
+   LIUM Design System — Tailwind v4 @theme
+   tailwind.config.ts is NOT read in v4;
+   all tokens live here.
+───────────────────────────────────────────── */
+
+@theme {
+  /* ── Colors ── */
+  --color-primary:                   #1a58b7;
+  --color-on-primary:                #ffffff;
+  --color-primary-container:         #3d72d2;
+  --color-on-primary-container:      #fefcff;
+  --color-inverse-primary:           #aec6ff;
+  --color-primary-fixed:             #d8e2ff;
+  --color-primary-fixed-dim:         #aec6ff;
+  --color-on-primary-fixed:          #001a43;
+  --color-on-primary-fixed-variant:  #004397;
+
+  --color-secondary:                  #006a65;
+  --color-on-secondary:               #ffffff;
+  --color-secondary-container:        #9ff1ea;
+  --color-on-secondary-container:     #10706b;
+  --color-secondary-fixed:            #9ff1ea;
+  --color-secondary-fixed-dim:        #84d5cd;
+  --color-on-secondary-fixed:         #00201e;
+  --color-on-secondary-fixed-variant: #00504c;
+
+  --color-tertiary:                  #825100;
+  --color-on-tertiary:               #ffffff;
+  --color-tertiary-container:        #a46700;
+  --color-on-tertiary-container:     #fffbff;
+  --color-tertiary-fixed:            #ffddb8;
+  --color-tertiary-fixed-dim:        #ffb960;
+  --color-on-tertiary-fixed:         #2a1700;
+  --color-on-tertiary-fixed-variant: #653e00;
+
+  --color-error:             #ba1a1a;
+  --color-on-error:          #ffffff;
+  --color-error-container:   #ffdad6;
+  --color-on-error-container:#93000a;
+
+  --color-surface:                    #f9f9ff;
+  --color-surface-dim:                #cfdaf1;
+  --color-surface-bright:             #f9f9ff;
+  --color-surface-container-lowest:   #ffffff;
+  --color-surface-container-low:      #f0f3ff;
+  --color-surface-container:          #e7eeff;
+  --color-surface-container-high:     #dee8ff;
+  --color-surface-container-highest:  #d8e3fa;
+  --color-surface-tint:               #1e5bba;
+  --color-surface-variant:            #d8e3fa;
+  --color-on-surface:                 #111c2c;
+  --color-on-surface-variant:         #424752;
+  --color-inverse-surface:            #263142;
+  --color-inverse-on-surface:         #ebf1ff;
+
+  --color-outline:         #737784;
+  --color-outline-variant: #c3c6d4;
+  --color-background:      #f9f9ff;
+  --color-on-background:   #111c2c;
+
+  /* ── Font families ── */
+  --font-sans:        var(--font-public-sans), "Public Sans", sans-serif;
+  --font-display-lg:  var(--font-public-sans), "Public Sans", sans-serif;
+  --font-headline-md: var(--font-public-sans), "Public Sans", sans-serif;
+  --font-body-base:   var(--font-public-sans), "Public Sans", sans-serif;
+  --font-label-caps:  var(--font-public-sans), "Public Sans", sans-serif;
+  --font-data-point:  var(--font-public-sans), "Public Sans", sans-serif;
+  --font-caption:     var(--font-public-sans), "Public Sans", sans-serif;
+
+  /* ── Border radius ── */
+  --radius-sm:   0.25rem;
+  --radius:      0.5rem;
+  --radius-md:   0.5rem;
+  --radius-lg:   0.75rem;
+  --radius-xl:   1rem;
+  --radius-2xl:  1.5rem;
+  --radius-full: 9999px;
+
+  /* ── Shadows ── */
+  --shadow-card:       0px 4px 20px rgba(74, 85, 104, 0.06);
+  --shadow-card-hover: 0px 4px 30px rgba(74, 85, 104, 0.10);
+
+  /* ── Named spacing (generates p-*, px-*, gap-*, m-*, etc.) ── */
+  --spacing-margin-desktop: 40px;
+  --spacing-margin-mobile:  16px;
+  --spacing-gutter:         24px;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* ── Typography utilities ── */
+/* Defined in @layer utilities so they can be overridden by Tailwind modifiers */
+@layer utilities {
+  .text-display-lg {
+    font-size: 48px;
+    line-height: 56px;
+    letter-spacing: -0.02em;
+    font-weight: 600;
   }
+  .text-headline-md {
+    font-size: 24px;
+    line-height: 32px;
+    letter-spacing: -0.01em;
+    font-weight: 600;
+  }
+  .text-data-point {
+    font-size: 20px;
+    line-height: 28px;
+    letter-spacing: 0.01em;
+    font-weight: 500;
+  }
+  .text-body-base {
+    font-size: 16px;
+    line-height: 24px;
+    letter-spacing: 0.01em;
+    font-weight: 400;
+  }
+  .text-label-caps {
+    font-size: 12px;
+    line-height: 16px;
+    letter-spacing: 0.08em;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  .text-caption {
+    font-size: 13px;
+    line-height: 18px;
+    letter-spacing: 0px;
+    font-weight: 400;
+  }
+
+  /* ── Layout ── */
+  .max-w-container { max-width: 1440px; }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* ── Leaflet overrides ──
+   Tailwind's preflight applies max-width / box-shadow resets that break tiles.
+   These selectors are scoped to .leaflet-container so nothing else is affected. */
+.leaflet-container {
+  font-family: var(--font-public-sans), sans-serif;
+}
+.leaflet-container img {
+  max-width: none !important;
+  max-height: none !important;
+  box-shadow: none !important;
+}
+/* Carto attribution — keep it subtle */
+.leaflet-control-attribution {
+  font-size: 10px !important;
+  background: rgba(255,255,255,0.75) !important;
+  backdrop-filter: blur(4px);
+  border-radius: 4px 0 0 0 !important;
+  padding: 2px 6px !important;
+}
+/* Zoom controls — match LIUM card style */
+.leaflet-control-zoom a {
+  font-size: 16px !important;
+  color: #424752 !important;
+}
+.leaflet-control-zoom a:hover {
+  background: #e7eeff !important;
+  color: #1a58b7 !important;
+}
+
+/* ── Material Symbols ── */
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  line-height: 1;
+  display: inline-block;
+  white-space: nowrap;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+  text-transform: none;
 }

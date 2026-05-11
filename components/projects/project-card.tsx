@@ -1,0 +1,98 @@
+import Link from 'next/link'
+import { cn } from '@/lib/utils'
+import { StatusBadge } from '@/components/ui/badge'
+import type { Project, AssetType, ProjectStatus } from '@/types'
+
+const ASSET_META: Record<AssetType, { label: string; icon: string }> = {
+  BESS:        { label: 'Battery Storage',  icon: 'battery_charging_full' },
+  MICROGRID:   { label: 'Microgrid',        icon: 'grid_view' },
+  DER_CLUSTER: { label: 'DER Cluster',      icon: 'hub' },
+}
+
+const STEP_MAP: Record<ProjectStatus, number> = {
+  DRAFT:               1,
+  DOCUMENTS_PENDING:   2,
+  TELEMETRY_PENDING:   3,
+  SUBMITTED:           3,
+}
+
+const TOTAL_STEPS = 3
+
+export function ProjectCard({ project }: { project: Project }) {
+  const { label: assetLabel, icon: assetIcon } = ASSET_META[project.assetType]
+  const completedSteps = STEP_MAP[project.status]
+  const isSubmitted = project.status === 'SUBMITTED'
+
+  return (
+    <Link href={`/projects/${project.id}`} className="block group">
+      <div className={cn(
+        'bg-surface-container-lowest rounded-xl border border-outline-variant/60',
+        'shadow-card group-hover:shadow-card-hover group-hover:-translate-y-px transition-all duration-200',
+        'flex flex-col h-full',
+      )}>
+        {/* Card header */}
+        <div className="p-6 pb-4 flex items-start gap-4">
+          <div className={cn(
+            'w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0',
+            isSubmitted ? 'bg-secondary-container text-secondary' : 'bg-surface-container-high text-on-surface-variant',
+          )}>
+            <span className="material-symbols-outlined text-[24px]">{assetIcon}</span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-label-caps text-on-surface-variant mb-1">{assetLabel}</p>
+            <h3 className="font-bold text-on-surface truncate leading-tight">{project.name}</h3>
+          </div>
+          <StatusBadge status={project.status} />
+        </div>
+
+        {/* Details */}
+        <div className="px-6 pb-4 flex-1 space-y-2">
+          {project.location && (
+            <div className="flex items-center gap-2 text-caption text-on-surface-variant">
+              <span className="material-symbols-outlined text-[14px] shrink-0">location_on</span>
+              <span className="truncate">{project.location}</span>
+            </div>
+          )}
+          <div className="flex items-center gap-2 text-caption text-on-surface-variant">
+            <span className="material-symbols-outlined text-[14px] shrink-0">lan</span>
+            <span>{project.jurisdiction}</span>
+          </div>
+          <div className="flex items-center gap-2 text-caption text-on-surface-variant">
+            <span className="material-symbols-outlined text-[14px] shrink-0">calendar_today</span>
+            <span>{new Date(project.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+          </div>
+        </div>
+
+        {/* Progress bar */}
+        <div className="px-6 pb-6 pt-2 border-t border-outline-variant/30">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[10px] font-bold text-on-surface-variant tracking-widest uppercase">
+              {isSubmitted ? 'Onboarding Complete' : `Step ${completedSteps} of ${TOTAL_STEPS}`}
+            </span>
+            {isSubmitted && (
+              <span
+                className="material-symbols-outlined text-secondary text-[16px]"
+                style={{ fontVariationSettings: "'FILL' 1" }}
+              >
+                check_circle
+              </span>
+            )}
+          </div>
+          <div className="flex gap-1.5">
+            {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
+              <div
+                key={i}
+                className={cn(
+                  'h-1.5 flex-1 rounded-full transition-all',
+                  i < completedSteps
+                    ? isSubmitted ? 'bg-secondary' : 'bg-primary'
+                    : 'bg-outline-variant/50',
+                )}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    </Link>
+  )
+}

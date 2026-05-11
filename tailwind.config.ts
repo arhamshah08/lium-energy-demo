@@ -1,0 +1,97 @@
+// Tailwind v4 reads app/globals.css @theme — this file is NOT used.
+// Kept only as documentation reference. Do not add tokens here.
+import type { Config } from 'tailwindcss'
+
+const config: Config = {
+  content: [
+    './app/**/*.{ts,tsx}',
+    './components/**/*.{ts,tsx}',
+  ],
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        primary: '#1a58b7',
+        'on-primary': '#ffffff',
+        'primary-container': '#3d72d2',
+        'on-primary-container': '#fefcff',
+        'inverse-primary': '#aec6ff',
+        'primary-fixed': '#d8e2ff',
+        'primary-fixed-dim': '#aec6ff',
+        'on-primary-fixed': '#001a43',
+        'on-primary-fixed-variant': '#004397',
+        secondary: '#006a65',
+        'on-secondary': '#ffffff',
+        'secondary-container': '#9ff1ea',
+        'on-secondary-container': '#10706b',
+        'secondary-fixed': '#9ff1ea',
+        'secondary-fixed-dim': '#84d5cd',
+        'on-secondary-fixed': '#00201e',
+        'on-secondary-fixed-variant': '#00504c',
+        tertiary: '#825100',
+        'on-tertiary': '#ffffff',
+        'tertiary-container': '#a46700',
+        'on-tertiary-container': '#fffbff',
+        'tertiary-fixed': '#ffddb8',
+        'tertiary-fixed-dim': '#ffb960',
+        error: '#ba1a1a',
+        'on-error': '#ffffff',
+        'error-container': '#ffdad6',
+        'on-error-container': '#93000a',
+        surface: '#f9f9ff',
+        'surface-dim': '#cfdaf1',
+        'surface-bright': '#f9f9ff',
+        'surface-container-lowest': '#ffffff',
+        'surface-container-low': '#f0f3ff',
+        'surface-container': '#e7eeff',
+        'surface-container-high': '#dee8ff',
+        'surface-container-highest': '#d8e3fa',
+        'surface-tint': '#1e5bba',
+        'surface-variant': '#d8e3fa',
+        'on-surface': '#111c2c',
+        'on-surface-variant': '#424752',
+        'inverse-surface': '#263142',
+        'inverse-on-surface': '#ebf1ff',
+        outline: '#737784',
+        'outline-variant': '#c3c6d4',
+        background: '#f9f9ff',
+        'on-background': '#111c2c',
+      },
+      borderRadius: {
+        DEFAULT: '0.5rem',
+        sm: '0.25rem',
+        md: '0.5rem',
+        lg: '0.75rem',
+        xl: '1rem',
+        '2xl': '1.5rem',
+        full: '9999px',
+      },
+      fontFamily: {
+        sans: ['var(--font-public-sans)', 'sans-serif'],
+      },
+      fontSize: {
+        'display-lg': ['48px', { lineHeight: '56px', letterSpacing: '-0.02em', fontWeight: '600' }],
+        'headline-md': ['24px', { lineHeight: '32px', letterSpacing: '-0.01em', fontWeight: '600' }],
+        'data-point': ['20px', { lineHeight: '28px', letterSpacing: '0.01em', fontWeight: '500' }],
+        'body-base': ['16px', { lineHeight: '24px', letterSpacing: '0.01em', fontWeight: '400' }],
+        'label-caps': ['12px', { lineHeight: '16px', letterSpacing: '0.08em', fontWeight: '700' }],
+        caption: ['13px', { lineHeight: '18px', letterSpacing: '0px', fontWeight: '400' }],
+      },
+      boxShadow: {
+        card: '0px 4px 20px rgba(74,85,104,0.06)',
+        'card-hover': '0px 4px 30px rgba(74,85,104,0.10)',
+      },
+      maxWidth: {
+        container: '1440px',
+      },
+      spacing: {
+        'margin-desktop': '40px',
+        'margin-mobile': '16px',
+        gutter: '24px',
+      },
+    },
+  },
+  plugins: [],
+}
+
+export default config
