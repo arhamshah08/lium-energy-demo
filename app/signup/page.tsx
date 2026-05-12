@@ -5,12 +5,37 @@ const ROLES = [
   {
     href: '/signup/developer',
     title: 'Project Developer',
-    description: 'Register and onboard distributed energy assets onto the LIUM network.',
+    icon: 'construction',
+    tag: 'ASSET SIDE',
+    description: 'Onboard distributed energy assets onto the LIUM network for institutional financing and securitisation.',
   },
   {
     href: '/signup/financier',
     title: 'Financier',
-    description: 'Discover, evaluate, and finance verified energy projects on the LIUM network.',
+    icon: 'account_balance',
+    tag: 'CAPITAL SIDE',
+    description: 'Access verified energy assets for structured debt or equity deployment across jurisdictions.',
+  },
+  {
+    href: '/signup/securitisation-agent',
+    title: 'Securitisation Agent',
+    icon: 'shield_lock',
+    tag: 'STRUCTURING',
+    description: 'Structure and verify asset pools for capital market instruments and rated securities.',
+  },
+  {
+    href: '/signup/portfolio-manager',
+    title: 'Portfolio Manager',
+    icon: 'monitoring',
+    tag: 'MANAGEMENT',
+    description: 'Monitor and manage diversified energy asset portfolios with real-time telemetry data.',
+  },
+  {
+    href: '/signup/investor',
+    title: 'Investor',
+    icon: 'trending_up',
+    tag: 'INVESTMENT',
+    description: 'Participate in structured energy finance products and institutional yield instruments.',
   },
 ]
 
@@ -18,30 +43,43 @@ export default function SignUpPage() {
   return (
     <div className="min-h-screen bg-background">
       <TopNav />
-      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-64px)] px-4">
-        <div className="w-full max-w-2xl">
-          <div className="text-center mb-10">
-            <h1 className="text-3xl font-bold text-on-surface mb-2">Create an account</h1>
-            <p className="text-on-surface-variant">Select your role to get started</p>
+      <div className="flex flex-col items-center min-h-[calc(100vh-64px)] px-4 py-16">
+        <div className="w-full max-w-5xl">
+          <div className="text-center mb-12">
+            <h1 className="text-4xl font-bold text-on-surface mb-3">Join LIUM Energy</h1>
+            <p className="text-on-surface-variant text-lg">Select your role on the network</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {ROLES.map(({ href, title, description }) => (
-              <Link key={href} href={href} className="group">
-                <div className="h-full p-10 rounded-xl border-2 border-outline-variant bg-surface-container-lowest
-                  hover:border-primary hover:shadow-lg transition-all duration-200 cursor-pointer">
-                  <h2 className="text-xl font-semibold text-on-surface mb-3 group-hover:text-primary transition-colors">
-                    {title}
-                  </h2>
-                  <p className="text-on-surface-variant text-sm leading-relaxed">{description}</p>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            {ROLES.map(({ href, title, icon, tag, description }) => (
+              <Link
+                key={href}
+                href={href}
+                className="group flex flex-col items-center text-center p-6 pt-8 border-2 border-outline-variant rounded-2xl hover:border-primary hover:bg-primary/5 transition-all min-h-[320px] justify-between"
+              >
+                <div className="flex flex-col items-center">
+                  <div className="w-14 h-14 rounded-xl bg-surface-container-high flex items-center justify-center mb-5 group-hover:bg-primary/10 transition-all">
+                    <span
+                      className="material-symbols-outlined text-[28px] text-on-surface-variant group-hover:text-primary transition-colors"
+                      style={{ fontVariationSettings: "'FILL' 0" }}
+                    >
+                      {icon}
+                    </span>
+                  </div>
+                  <p className="text-[9px] font-bold tracking-[0.15em] text-primary mb-2 uppercase">{tag}</p>
+                  <h3 className="font-bold text-on-surface text-sm leading-snug mb-3">{title}</h3>
+                  <p className="text-xs text-on-surface-variant leading-relaxed">{description}</p>
                 </div>
+                <span className="mt-6 text-xs text-primary font-semibold group-hover:underline">
+                  Get started →
+                </span>
               </Link>
             ))}
           </div>
-          <p className="text-center text-sm text-on-surface-variant mt-8">
+
+          <p className="text-center text-sm text-on-surface-variant mt-10">
             Already have an account?{' '}
-            <Link href="/signin" className="text-primary font-medium hover:underline">
-              Sign in
-            </Link>
+            <Link href="/signin" className="text-primary font-medium hover:underline">Sign in</Link>
           </p>
         </div>
       </div>
