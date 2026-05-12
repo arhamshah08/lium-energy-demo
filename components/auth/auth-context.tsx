@@ -12,10 +12,11 @@ interface AuthUser {
 interface AuthContextValue {
   user: AuthUser | null
   token: string | null
+  signIn: (token: string) => void
   signOut: () => void
 }
 
-const AuthContext = createContext<AuthContextValue>({ user: null, token: null, signOut: () => {} })
+const AuthContext = createContext<AuthContextValue>({ user: null, token: null, signIn: () => {}, signOut: () => {} })
 
 function parseToken(token: string): AuthUser | null {
   try {
@@ -39,6 +40,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  function signIn(newToken: string) {
+    const parsed = parseToken(newToken)
+    if (parsed) {
+      localStorage.setItem('token', newToken)
+      setToken(newToken)
+      setUser(parsed)
+    }
+  }
+
   function signOut() {
     localStorage.removeItem('token')
     setToken(null)
@@ -46,7 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     window.location.href = '/'
   }
 
-  return <AuthContext.Provider value={{ user, token, signOut }}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={{ user, token, signIn, signOut }}>{children}</AuthContext.Provider>
 }
 
 export function useAuth() {

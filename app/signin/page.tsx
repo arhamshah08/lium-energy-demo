@@ -6,9 +6,11 @@ import { useRouter } from 'next/navigation'
 import { TopNav } from '@/components/layout/top-nav'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { useAuth } from '@/components/auth/auth-context'
 
 export default function SignInPage() {
   const router = useRouter()
+  const { signIn } = useAuth()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [form, setForm] = useState({ email: '', password: '' })
@@ -28,7 +30,7 @@ export default function SignInPage() {
       })
       const data = await res.json()
       if (!res.ok) { setError(data.error || 'Invalid email or password'); return }
-      localStorage.setItem('token', data.token)
+      signIn(data.token)
       router.push('/projects')
     } catch {
       setError('Cannot connect to server')
