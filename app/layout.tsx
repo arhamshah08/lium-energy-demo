@@ -1,9 +1,9 @@
 import type { Metadata } from 'next'
-import { Public_Sans } from 'next/font/google'
+import { DM_Sans } from 'next/font/google'
 import { AuthProvider } from '@/components/auth/auth-context'
 import './globals.css'
 
-const publicSans = Public_Sans({
+const dmSans = DM_Sans({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700'],
   variable: '--font-public-sans',
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${publicSans.variable} light`}>
+    <html lang="en" className={`${dmSans.variable} light`}>
       <head>
         <link
           rel="stylesheet"
