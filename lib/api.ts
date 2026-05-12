@@ -7,8 +7,6 @@ import type {
   UpdateTelemetryBody,
 } from '@/types'
 
-const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL ?? 'http://localhost:4000'
-
 function getToken() {
   if (typeof window === 'undefined') return null
   return localStorage.getItem('token')
@@ -17,7 +15,7 @@ function getToken() {
 async function request<T>(path: string, init?: RequestInit): Promise<ApiResponse<T>> {
   try {
     const token = getToken()
-    const res = await fetch(`${BACKEND}${path}`, {
+    const res = await fetch(path, {
       ...init,
       headers: {
         'Content-Type': 'application/json',

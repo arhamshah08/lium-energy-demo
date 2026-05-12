@@ -1,15 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getProject, saveProject } from '@/lib/store'
+import { supabase } from '@/lib/supabase'
+import { getUserFromHeader } from '@/lib/project-helpers'
 import type { ApiResponse, TelemetryTestResult } from '@/types'
 
 export async function POST(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse<ApiResponse<TelemetryTestResult>>> {
-  const { id } = await params
-  const project = getProject(id)
+  const user = getUserFromHeader(req.headers.get('Authorization'))
+  if (!user) {
+    return NextResponse.json(
+      { ok: false, error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } },
+      { status: 401 },
+    )
+  }
 
-  if (!project) {
+  const { id } = await params
+  const { data: project, error: fetchError } = await supabase
+    .from('projects')
+    .select('*')
+    .eq('id', id)
+    .eq('user_id', user.id)
+    .single()
+
+  if (fetchError || !project) {
     return NextResponse.json(
       { ok: false, error: { code: 'NOT_FOUND', message: `Project ${id} not found` } },
       { status: 404 },
@@ -23,7 +37,6 @@ export async function POST(
     )
   }
 
-  // Simulate handshake latency
   await new Promise((r) => setTimeout(r, 600))
 
   const result: TelemetryTestResult = {
@@ -37,12 +50,14 @@ export async function POST(
     },
   }
 
-  saveProject({
-    ...project,
-    status: 'SUBMITTED',
-    updatedAt: new Date().toISOString(),
-    telemetry: { ...project.telemetry, verified: true, verifiedAt: new Date().toISOString() },
-  })
+  await supabase
+    .from('projects')
+    .update({
+      status: 'SUBMITTED',
+      updated_at: new Date().toISOString(),
+      telemetry: { ...project.telemetry, verified: true, verifiedAt: new Date().toISOString() },
+    })
+    .eq('id', id)
 
   return NextResponse.json({ ok: true, data: result })
 }

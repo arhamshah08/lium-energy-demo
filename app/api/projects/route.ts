@@ -1,47 +1,74 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { randomUUID } from 'crypto'
-import { saveProject, listProjects } from '@/lib/store'
+import { supabase } from '@/lib/supabase'
+import { getUserFromHeader, dbToProject } from '@/lib/project-helpers'
 import type { CreateProjectBody, Project, ApiResponse } from '@/types'
 
-export async function GET(): Promise<NextResponse<ApiResponse<Project[]>>> {
-  return NextResponse.json({ ok: true, data: listProjects() })
+export async function GET(req: NextRequest): Promise<NextResponse<ApiResponse<Project[]>>> {
+  const user = getUserFromHeader(req.headers.get('Authorization'))
+  if (!user) {
+    return NextResponse.json(
+      { ok: false, error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } },
+      { status: 401 },
+    )
+  }
+
+  let query = supabase.from('projects').select('*')
+  if (user.role === 'financier') {
+    query = query.eq('status', 'SUBMITTED')
+  } else {
+    query = query.eq('user_id', user.id)
+  }
+
+  const { data, error } = await query.order('created_at', { ascending: false })
+  if (error) {
+    return NextResponse.json(
+      { ok: false, error: { code: 'DB_ERROR', message: error.message } },
+      { status: 500 },
+    )
+  }
+
+  return NextResponse.json({ ok: true, data: (data ?? []).map(dbToProject) })
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse<ApiResponse<Project>>> {
+  const user = getUserFromHeader(req.headers.get('Authorization'))
+  if (!user) {
+    return NextResponse.json(
+      { ok: false, error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } },
+      { status: 401 },
+    )
+  }
+
   const body: CreateProjectBody = await req.json()
-
-  if (!body.name?.trim()) {
-    return NextResponse.json(
-      { ok: false, error: { code: 'VALIDATION_ERROR', message: 'Project name is required' } },
-      { status: 422 },
-    )
-  }
-  if (!body.jurisdiction) {
-    return NextResponse.json(
-      { ok: false, error: { code: 'VALIDATION_ERROR', message: 'Jurisdiction is required' } },
-      { status: 422 },
-    )
-  }
-  if (!body.assetType) {
-    return NextResponse.json(
-      { ok: false, error: { code: 'VALIDATION_ERROR', message: 'Asset type is required' } },
-      { status: 422 },
-    )
-  }
-
+  const name = body.name?.trim() || 'Unnamed Project'
+  const jurisdiction = body.jurisdiction || 'ERCOT'
+  const assetType = body.assetType || 'BESS'
   const now = new Date().toISOString()
-  const project: Project = {
-    id: randomUUID(),
-    status: 'DRAFT',
-    name: body.name.trim(),
-    location: body.location?.trim() ?? '',
-    jurisdiction: body.jurisdiction,
-    assetType: body.assetType,
-    createdAt: now,
-    updatedAt: now,
-    documents: [],
+
+  const { data, error } = await supabase
+    .from('projects')
+    .insert({
+      id: randomUUID(),
+      user_id: user.id,
+      status: 'DRAFT',
+      name,
+      location: body.location?.trim() ?? '',
+      jurisdiction,
+      asset_type: assetType,
+      documents: [],
+      created_at: now,
+      updated_at: now,
+    })
+    .select()
+    .single()
+
+  if (error) {
+    return NextResponse.json(
+      { ok: false, error: { code: 'DB_ERROR', message: error.message } },
+      { status: 500 },
+    )
   }
 
-  saveProject(project)
-  return NextResponse.json({ ok: true, data: project }, { status: 201 })
+  return NextResponse.json({ ok: true, data: dbToProject(data) }, { status: 201 })
 }
