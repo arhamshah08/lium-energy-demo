@@ -7,26 +7,38 @@ import type {
   UpdateTelemetryBody,
 } from '@/types'
 
-async function request<T>(
-  input: RequestInfo,
-  init?: RequestInit,
-): Promise<ApiResponse<T>> {
+const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL ?? 'http://localhost:4000'
+
+function getToken() {
+  if (typeof window === 'undefined') return null
+  return localStorage.getItem('token')
+}
+
+async function request<T>(path: string, init?: RequestInit): Promise<ApiResponse<T>> {
   try {
-    const res = await fetch(input, {
+    const token = getToken()
+    const res = await fetch(`${BACKEND}${path}`, {
       ...init,
-      headers: { 'Content-Type': 'application/json', ...init?.headers },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...init?.headers,
+      },
     })
     const json = await res.json()
-    if (!res.ok) return json as ApiResponse<T>
+    if (!res.ok) return { ok: false, error: { code: 'API_ERROR', message: json.error ?? 'Request failed' } }
     return json as ApiResponse<T>
   } catch {
-    return { ok: false, error: { code: 'NETWORK_ERROR', message: 'Network request failed' } }
+    return { ok: false, error: { code: 'NETWORK_ERROR', message: 'Cannot connect to server' } }
   }
 }
 
 export const projectsApi = {
   create: (body: CreateProjectBody) =>
     request<Project>('/api/projects', { method: 'POST', body: JSON.stringify(body) }),
+
+  list: () =>
+    request<Project[]>('/api/projects'),
 
   get: (id: string) =>
     request<Project>(`/api/projects/${id}`),

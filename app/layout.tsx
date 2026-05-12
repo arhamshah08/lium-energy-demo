@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Public_Sans } from 'next/font/google'
+import { AuthProvider } from '@/components/auth/auth-context'
 import './globals.css'
 
 const publicSans = Public_Sans({
@@ -24,7 +25,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className="bg-background text-on-background antialiased min-h-screen" style={{ fontFamily: 'var(--font-public-sans), sans-serif' }}>
-        {children}
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   )

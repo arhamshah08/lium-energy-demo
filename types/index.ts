@@ -42,6 +42,8 @@ export interface CreateProjectBody {
   location: string
   jurisdiction: Jurisdiction
   assetType: AssetType
+  actorRole?: string
+  revenueTypes?: string[]
 }
 
 export interface UpdateDocumentsBody {

@@ -1,5 +1,9 @@
-import { redirect } from 'next/navigation'
+import { TopNav } from '@/components/layout/top-nav'
 
 export default function Home() {
-  redirect('/projects')
+  return (
+    <div className="min-h-screen bg-background">
+      <TopNav />
+    </div>
+  )
 }
