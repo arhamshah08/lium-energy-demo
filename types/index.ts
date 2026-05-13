@@ -12,6 +12,7 @@ export interface DocumentRecord {
   type: 'TECHNICAL_AUDIT' | 'PPA_AGREEMENT' | 'INTERCONNECTION_STUDY' | 'INSURANCE_CERTIFICATE'
   filename: string
   uploadedAt: string
+  parsed?: Record<string, string | null>
 }
 
 export interface TelemetryConfig {
@@ -50,6 +51,7 @@ export interface UpdateDocumentsBody {
   documents: Array<{
     type: DocumentRecord['type']
     filename: string
+    parsed?: Record<string, string | null>
   }>
 }
 
