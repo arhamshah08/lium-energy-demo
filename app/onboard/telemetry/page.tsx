@@ -1,7 +1,6 @@
 import { redirect } from 'next/navigation'
 import { Stepper } from '@/components/onboard/stepper'
 import { TelemetryForm } from '@/components/onboard/telemetry-form'
-import { getProjectById } from '@/lib/store'
 
 interface Props {
   searchParams: Promise<{ id?: string }>
@@ -10,9 +9,6 @@ interface Props {
 export default async function TelemetryPage({ searchParams }: Props) {
   const { id } = await searchParams
   if (!id) redirect('/onboard/project-details')
-
-  const project = await getProjectById(id)
-  if (!project) redirect('/onboard/project-details')
 
   return (
     <div className="max-w-5xl mx-auto">

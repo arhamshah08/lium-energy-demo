@@ -1,7 +1,6 @@
 import { redirect } from 'next/navigation'
 import { Stepper } from '@/components/onboard/stepper'
 import { DocumentVaultForm } from '@/components/onboard/document-vault-form'
-import { getProjectById } from '@/lib/store'
 
 interface Props {
   searchParams: Promise<{ id?: string }>
@@ -10,9 +9,6 @@ interface Props {
 export default async function DocumentVaultPage({ searchParams }: Props) {
   const { id } = await searchParams
   if (!id) redirect('/onboard/project-details')
-
-  const project = await getProjectById(id)
-  if (!project) redirect('/onboard/project-details')
 
   return (
     <div className="max-w-5xl mx-auto">
@@ -48,13 +44,6 @@ export default async function DocumentVaultPage({ searchParams }: Props) {
                 the funding window.
               </p>
             </div>
-          </div>
-          <div className="bg-surface-container-low rounded-xl border border-outline-variant p-4">
-            <p className="text-label-caps font-bold text-on-surface-variant tracking-widest mb-3">PROJECT</p>
-            <p className="font-bold text-on-surface">{project.name}</p>
-            <p className="text-caption text-on-surface-variant mt-1">
-              {project.jurisdiction} · {project.assetType}
-            </p>
           </div>
         </aside>
       </div>
