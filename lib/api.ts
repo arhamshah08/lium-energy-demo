@@ -24,7 +24,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<ApiResponse
       },
     })
     const json = await res.json()
-    if (!res.ok) return { ok: false, error: { code: 'API_ERROR', message: json.error ?? 'Request failed' } }
+    if (!res.ok) return { ok: false, error: { code: 'API_ERROR', message: json.error?.message ?? json.message ?? 'Request failed' } }
     return json as ApiResponse<T>
   } catch {
     return { ok: false, error: { code: 'NETWORK_ERROR', message: 'Cannot connect to server' } }
