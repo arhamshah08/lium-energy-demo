@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { getProject } from '@/lib/store'
+import { getProjectById } from '@/lib/store'
 import { StatusBadge } from '@/components/ui/badge'
 import type { AssetType, DocumentRecord, ProjectStatus } from '@/types'
 
@@ -41,7 +41,7 @@ export default async function ProjectDetailPage({
 }) {
   const { id } = await params
   const { new: isNew } = await searchParams
-  const project = getProject(id)
+  const project = await getProjectById(id)
 
   if (!project) redirect('/projects')
 
@@ -98,7 +98,7 @@ export default async function ProjectDetailPage({
         {continueHref && (
           <Link
             href={continueHref}
-            className="inline-flex items-center gap-2 bg-primary text-on-primary px-5 py-2.5 rounded-lg text-label-caps font-bold hover:opacity-90 transition-all shadow-sm shrink-0"
+            className="inline-flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-lg text-label-caps font-bold hover:opacity-90 transition-all shadow-sm shrink-0"
           >
             {nextOnboardLabel(project.status)}
             <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
@@ -213,7 +213,7 @@ export default async function ProjectDetailPage({
                 {project.documents.map((doc, i) => (
                   <li key={i} className="flex items-center gap-4 px-6 py-4">
                     <div className="w-9 h-9 rounded-lg bg-primary-fixed/50 flex items-center justify-center shrink-0">
-                      <span className="material-symbols-outlined text-[18px] text-on-primary-fixed-variant">description</span>
+                      <span className="material-symbols-outlined text-[18px] text-white-fixed-variant">description</span>
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-caption font-bold text-on-surface truncate">
@@ -277,7 +277,7 @@ export default async function ProjectDetailPage({
                 ].map(({ step, label, done }) => (
                   <div key={step} className="flex items-center gap-3">
                     <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${
-                      done ? 'bg-secondary text-on-secondary' : 'bg-outline-variant/40 text-on-surface-variant'
+                      done ? 'bg-secondary text-white' : 'bg-outline-variant/40 text-on-surface-variant'
                     }`}>
                       {done
                         ? <span className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: "'FILL' 1" }}>check</span>
@@ -294,7 +294,7 @@ export default async function ProjectDetailPage({
                 <div className="px-6 pb-6">
                   <Link
                     href={continueHref}
-                    className="flex w-full items-center justify-center gap-2 bg-primary text-on-primary py-3 rounded-lg text-label-caps font-bold hover:opacity-90 transition-all"
+                    className="flex w-full items-center justify-center gap-2 bg-primary text-white py-3 rounded-lg text-label-caps font-bold hover:opacity-90 transition-all"
                   >
                     Continue: {nextOnboardLabel(project.status)}
                     <span className="material-symbols-outlined text-[16px]">arrow_forward</span>

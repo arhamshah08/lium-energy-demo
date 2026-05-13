@@ -5,15 +5,15 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from './auth-context'
 
 export function Protected({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth()
+  const { user, loading } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
-    if (user === null && !localStorage.getItem('token')) {
+    if (!loading && !user) {
       router.replace('/signin')
     }
-  }, [user, router])
+  }, [user, loading, router])
 
-  if (!user) return null
+  if (loading || !user) return null
   return <>{children}</>
 }

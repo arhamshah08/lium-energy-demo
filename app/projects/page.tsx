@@ -1,11 +1,21 @@
-import Link from 'next/link'
-import { listProjects } from '@/lib/store'
-import { ProjectCard } from '@/components/projects/project-card'
+'use client'
 
-export const dynamic = 'force-dynamic'
+import { useEffect, useState } from 'react'
+import Link from 'next/link'
+import { projectsApi } from '@/lib/api'
+import { ProjectCard } from '@/components/projects/project-card'
+import type { Project } from '@/types'
 
 export default function ProjectsPage() {
-  const projects = listProjects()
+  const [projects, setProjects] = useState<Project[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    projectsApi.list().then((res) => {
+      if (res.ok) setProjects(res.data)
+      setLoading(false)
+    })
+  }, [])
 
   const submitted = projects.filter(p => p.status === 'SUBMITTED').length
   const inProgress = projects.length - submitted
@@ -22,7 +32,7 @@ export default function ProjectsPage() {
         </div>
         <Link
           href="/onboard/project-details"
-          className="inline-flex items-center gap-2 bg-primary text-on-primary px-6 py-3 rounded-lg text-label-caps font-bold hover:opacity-90 transition-all shadow-sm shrink-0"
+          className="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-lg text-label-caps font-bold hover:opacity-90 transition-all shadow-sm shrink-0"
         >
           <span className="material-symbols-outlined text-[18px]">add</span>
           New Asset
@@ -50,8 +60,12 @@ export default function ProjectsPage() {
         ))}
       </div>
 
-      {/* Grid or empty state */}
-      {projects.length === 0 ? (
+      {/* Grid or empty/loading state */}
+      {loading ? (
+        <div className="flex items-center justify-center py-24">
+          <span className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        </div>
+      ) : projects.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-24 text-center">
           <div className="w-20 h-20 rounded-2xl bg-surface-container-high flex items-center justify-center mb-6">
             <span className="material-symbols-outlined text-[40px] text-outline">energy_program_saving</span>
@@ -62,7 +76,7 @@ export default function ProjectsPage() {
           </p>
           <Link
             href="/onboard/project-details"
-            className="inline-flex items-center gap-2 bg-primary text-on-primary px-8 py-3 rounded-lg text-label-caps font-bold hover:opacity-90 transition-all shadow-sm"
+            className="inline-flex items-center gap-2 bg-primary text-white px-8 py-3 rounded-lg text-label-caps font-bold hover:opacity-90 transition-all shadow-sm"
           >
             <span className="material-symbols-outlined text-[18px]">add</span>
             Register First Asset

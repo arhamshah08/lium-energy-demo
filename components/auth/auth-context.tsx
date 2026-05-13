@@ -12,15 +12,18 @@ interface AuthUser {
 interface AuthContextValue {
   user: AuthUser | null
   token: string | null
+  loading: boolean
   signIn: (token: string) => void
   signOut: () => void
 }
 
-const AuthContext = createContext<AuthContextValue>({ user: null, token: null, signIn: () => {}, signOut: () => {} })
+const AuthContext = createContext<AuthContextValue>({ user: null, token: null, loading: true, signIn: () => {}, signOut: () => {} })
 
 function parseToken(token: string): AuthUser | null {
   try {
-    const payload = JSON.parse(atob(token.split('.')[1]))
+    // JWTs use base64url (- and _ instead of + and /). atob only handles standard base64.
+    const b64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')
+    const payload = JSON.parse(atob(b64))
     return { id: payload.id, email: payload.email, role: payload.role, fullName: payload.fullName ?? '' }
   } catch {
     return null
@@ -30,6 +33,7 @@ function parseToken(token: string): AuthUser | null {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null)
   const [user, setUser] = useState<AuthUser | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const stored = localStorage.getItem('token')
@@ -38,6 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (parsed) { setToken(stored); setUser(parsed) }
       else localStorage.removeItem('token')
     }
+    setLoading(false)
   }, [])
 
   function signIn(newToken: string) {
@@ -56,7 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     window.location.href = '/'
   }
 
-  return <AuthContext.Provider value={{ user, token, signIn, signOut }}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={{ user, token, loading, signIn, signOut }}>{children}</AuthContext.Provider>
 }
 
 export function useAuth() {

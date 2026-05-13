@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { Stepper } from '@/components/onboard/stepper'
 import { TelemetryForm } from '@/components/onboard/telemetry-form'
-import { getProject } from '@/lib/store'
+import { getProjectById } from '@/lib/store'
 
 interface Props {
   searchParams: Promise<{ id?: string }>
@@ -11,7 +11,7 @@ export default async function TelemetryPage({ searchParams }: Props) {
   const { id } = await searchParams
   if (!id) redirect('/onboard/project-details')
 
-  const project = getProject(id)
+  const project = await getProjectById(id)
   if (!project) redirect('/onboard/project-details')
 
   return (
@@ -35,7 +35,7 @@ export default async function TelemetryPage({ searchParams }: Props) {
           <TelemetryForm projectId={id} />
         </div>
         <aside className="col-span-12 lg:col-span-4">
-          <div className="bg-primary p-8 rounded-xl text-on-primary shadow-xl sticky top-24">
+          <div className="bg-primary p-8 rounded-xl text-white shadow-xl sticky top-24">
             <span
               className="material-symbols-outlined text-4xl mb-6 block"
               style={{ fontVariationSettings: "'FILL' 1" }}
