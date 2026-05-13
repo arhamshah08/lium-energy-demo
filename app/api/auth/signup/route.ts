@@ -58,17 +58,19 @@ async function createDediSubscriberRecord(
   fullName: string,
   country: string | null,
   publicKeyBase64: string,
+  role: string,
 ): Promise<string | null> {
   try {
-    const registryName = buildRegistryName(companyName, fullName, 'developer')
+    const registryName = buildRegistryName(companyName, fullName, role)
     const countries = ['USA']
+    const type = role === 'financier' ? 'BAP' : 'BPP'
     const url = `https://api.dedi.global/dedi/${DEDI_NAMESPACE}/${registryName}/save-record-as-draft?publish=true`
     const body = {
       record_name: userId,
-      description: `${companyName || fullName} developer BPP record`,
+      description: `${companyName || fullName} ${role} ${type} record`,
       details: {
         url: `https://lium.beckn.io/${userId}`,
-        type: 'BPP',
+        type,
         domain: '*',
         countries,
         subscriber_id: userId,
@@ -102,13 +104,15 @@ async function createDediParticipantsRecord(
   userId: string,
   companyName: string,
   fullName: string,
+  role: string,
 ): Promise<string | null> {
   try {
-    const registryName = buildRegistryName(companyName, fullName, 'developer')
+    const registryName = buildRegistryName(companyName, fullName, role)
+    const type = role === 'financier' ? 'BAP' : 'BPP'
     const url = `https://api.dedi.global/dedi/${DEDI_NAMESPACE}/lium_energy_participants/save-record-as-draft?publish=true`
     const body = {
       record_name: registryName,
-      description: `${companyName || fullName} developer BPP record`,
+      description: `${companyName || fullName} ${role} ${type} record`,
       details: {
         url: `https://api.dedi.global/dedi/lookup/${DEDI_NAMESPACE}/${registryName}`,
         type: 'Registry',
@@ -168,18 +172,18 @@ export async function POST(req: NextRequest) {
   let becknRecordId: string | null = null
   let participantsRecordId: string | null = null
 
-  if (role === 'developer') {
+  if (role === 'developer' || role === 'financier') {
     // Wait for DeDi registry to be ready before publishing records
     await new Promise(resolve => setTimeout(resolve, 3000))
 
-    // Step 2 — generate Ed25519 keypair + publish BPP subscriber record
+    // Step 2 — generate Ed25519 keypair + publish subscriber record
     const { publicKeyBase64, privateKeyBase64 } = generateEd25519KeyPair()
     signingPublicKey = publicKeyBase64
     signingPrivateKey = privateKeyBase64
-    becknRecordId = await createDediSubscriberRecord(userId, companyName, fullName, country, publicKeyBase64)
+    becknRecordId = await createDediSubscriberRecord(userId, companyName, fullName, country, publicKeyBase64, role)
 
     // Step 3 — add entry to central participants index
-    participantsRecordId = await createDediParticipantsRecord(userId, companyName, fullName)
+    participantsRecordId = await createDediParticipantsRecord(userId, companyName, fullName, role)
   }
 
   const profile: Record<string, unknown> = {

@@ -39,7 +39,7 @@ export function SideNav() {
             className={cn(
               'flex items-center gap-3 px-4 py-3 rounded-lg text-label-caps transition-all',
               isActive(href)
-                ? 'bg-secondary-container text-on-secondary-container translate-x-1'
+                ? 'bg-secondary-container text-white-container translate-x-1'
                 : 'text-on-surface-variant hover:bg-surface-variant',
             )}
           >
@@ -51,7 +51,7 @@ export function SideNav() {
       <div className="p-3 pt-4 border-t border-outline-variant space-y-1">
         <Link
           href="/onboard/project-details"
-          className="flex w-full items-center justify-center gap-2 bg-primary text-on-primary font-label-caps py-3 rounded-lg hover:opacity-90 transition-all mb-3"
+          className="flex w-full items-center justify-center gap-2 bg-primary text-white font-label-caps py-3 rounded-lg hover:opacity-90 transition-all mb-3"
         >
           <span className="material-symbols-outlined text-[16px]">add</span>
           Issue Asset

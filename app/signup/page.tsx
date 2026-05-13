@@ -1,5 +1,10 @@
+'use client'
+
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { TopNav } from '@/components/layout/top-nav'
+import { useAuth } from '@/components/auth/auth-context'
 
 const ROLES = [
   {
@@ -40,6 +45,15 @@ const ROLES = [
 ]
 
 export default function SignUpPage() {
+  const { user, loading } = useAuth()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (!loading && user) router.replace('/projects')
+  }, [user, loading, router])
+
+  if (loading || user) return null
+
   return (
     <div className="min-h-screen bg-background">
       <TopNav />
