@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { TopNav } from '@/components/layout/top-nav'
 import { Input, Select } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { useAuth } from '@/components/auth/auth-context'
 
 const FINANCIER_TYPES = [
   { value: '', label: 'Select type...' },
@@ -26,6 +27,7 @@ export interface SignupFormConfig {
 
 export function SignupForm({ config }: { config: SignupFormConfig }) {
   const router = useRouter()
+  const { signIn } = useAuth()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [form, setForm] = useState({
@@ -64,7 +66,7 @@ export function SignupForm({ config }: { config: SignupFormConfig }) {
       })
       const data = await res.json()
       if (!res.ok) { setError(data.error || 'Something went wrong'); return }
-      localStorage.setItem('token', data.token)
+      signIn(data.token)
       router.push('/projects')
     } catch {
       setError('Cannot connect to server')
@@ -74,19 +76,23 @@ export function SignupForm({ config }: { config: SignupFormConfig }) {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen flex flex-col bg-surface-container-low">
       <TopNav />
-      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-64px)] px-4 py-12">
-        <div className="w-full max-w-lg">
 
-          <div className="mb-8">
-            <Link href="/signup" className="text-sm text-on-surface-variant hover:text-primary transition-colors">
-              ← Back
-            </Link>
-            <h1 className="text-3xl font-bold text-on-surface mt-4 mb-1">{config.title}</h1>
-            <p className="text-on-surface-variant">Create your account to get started</p>
-          </div>
+      {/* Brand strip */}
+      <div className="bg-primary py-8 px-4">
+        <div className="max-w-lg mx-auto">
+          <Link href="/signup" className="text-sm text-primary-fixed hover:text-white transition-colors">
+            ← Back to roles
+          </Link>
+          <h1 className="text-headline-md text-white mt-3">{config.title}</h1>
+          <p className="text-caption text-primary-fixed mt-1">Create your account to get started</p>
+        </div>
+      </div>
 
+      {/* Form card */}
+      <div className="flex justify-center px-4 py-10 flex-1">
+        <div className="w-full max-w-lg bg-white rounded-2xl shadow-card-hover p-8 border border-outline-variant/20">
           <form onSubmit={handleSubmit} className="space-y-8">
 
             {/* Organisation section */}

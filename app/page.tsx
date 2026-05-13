@@ -1,138 +1,112 @@
-import Link from 'next/link'
+import Image from 'next/image'
+import { TopNav } from '@/components/layout/top-nav'
+import { Footer } from '@/components/layout/footer'
+import { HeroCta, CtaBannerLink } from '@/components/layout/hero-cta'
+
+const FEATURES = [
+  {
+    icon: 'bolt',
+    title: 'Tokenise Assets',
+    description: 'Onboard solar, wind, and grid projects with standardised documentation and on-chain registration.',
+  },
+  {
+    icon: 'handshake',
+    title: 'Match Investors',
+    description: 'Connect with institutional capital through a compliant deal room and verified participant registry.',
+  },
+  {
+    icon: 'rocket_launch',
+    title: 'Close Faster',
+    description: 'Automated workflows take projects from listing to fully funded in days, not months.',
+  },
+]
+
+const STATS = [
+  { value: '$2.4B', label: 'Assets Onboarded' },
+  { value: '140+', label: 'Active Projects' },
+  { value: '60+', label: 'Institutional Investors' },
+  { value: '12', label: 'Jurisdictions' },
+]
 
 export default function Home() {
   return (
-    <div className="min-h-screen" style={{ fontFamily: 'var(--font-public-sans), DM Sans, sans-serif', backgroundColor: '#F2F3F3' }}>
-
-      {/* ── Top Nav ── */}
-      <header style={{ backgroundColor: '#232F3E', borderBottom: '1px solid #3a4a5c' }}>
-        <div className="max-w-container mx-auto px-10 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span style={{ color: '#FF9900', fontWeight: 700, fontSize: 20, letterSpacing: '-0.02em' }}>LIUM</span>
-            <span style={{ color: '#8a9bb0', fontSize: 13 }}>Energy Network</span>
-          </div>
-          <nav className="flex items-center gap-6">
-            <Link href="/signin" style={{ color: '#d1dbe8', fontSize: 14 }} className="hover:text-white transition-colors">Sign in</Link>
-            <Link
-              href="/signup/developer"
-              style={{ backgroundColor: '#FF9900', color: '#0d1117', fontSize: 13, fontWeight: 600, padding: '6px 16px', borderRadius: 2 }}
-              className="hover:opacity-90 transition-opacity"
-            >
-              Get Started
-            </Link>
-          </nav>
-        </div>
-      </header>
+    <div className="min-h-screen bg-background flex flex-col">
+      <TopNav />
 
       {/* ── Hero ── */}
-      <section style={{ backgroundColor: '#232F3E' }} className="pb-16 pt-12">
-        <div className="max-w-container mx-auto px-10 grid grid-cols-2 gap-12 items-center">
+      <section className="bg-primary">
+        <div className="max-w-container mx-auto px-margin-desktop py-20 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
           <div>
-            <p style={{ color: '#FF9900', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>
-              Institutional Infrastructure Finance
-            </p>
-            <h1 style={{ color: '#ffffff', fontSize: 42, fontWeight: 700, lineHeight: 1.15, letterSpacing: '-0.02em', marginBottom: 16 }}>
+
+            <h1 className="text-display-lg text-white mb-5">
               Real assets.<br />Global capital.
             </h1>
-            <p style={{ color: '#8a9bb0', fontSize: 16, lineHeight: 1.6, marginBottom: 28, maxWidth: 400 }}>
+            <p className="text-body-base text-primary-fixed mb-8 max-w-md">
               Securitise utility-scale energy projects and connect them to institutional investors — on one platform.
             </p>
-            <div className="flex gap-3">
-              <Link
-                href="/signup/developer"
-                style={{ backgroundColor: '#FF9900', color: '#0d1117', fontSize: 14, fontWeight: 600, padding: '10px 24px', borderRadius: 2 }}
-                className="hover:opacity-90 transition-opacity"
-              >
-                List a Project
-              </Link>
-              <Link
-                href="/signup/investor"
-                style={{ border: '1px solid #4a5e72', color: '#d1dbe8', fontSize: 14, fontWeight: 500, padding: '10px 24px', borderRadius: 2 }}
-                className="hover:border-gray-400 transition-colors"
-              >
-                Browse Assets
-              </Link>
-            </div>
+            <HeroCta />
           </div>
 
-          {/* Hero image placeholder */}
-          <div
-            style={{ backgroundColor: '#1a2733', border: '1px solid #2e3f52', borderRadius: 4, height: 320 }}
-            className="flex items-center justify-center"
-          >
-            <div className="text-center">
-              <div style={{ width: 48, height: 48, backgroundColor: '#2e3f52', borderRadius: 4, margin: '0 auto 10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <rect x="3" y="3" width="18" height="18" rx="1" stroke="#4a5e72" strokeWidth="1.5"/>
-                  <circle cx="8.5" cy="8.5" r="1.5" stroke="#4a5e72" strokeWidth="1.5"/>
-                  <path d="M21 15l-5-5L5 21" stroke="#4a5e72" strokeWidth="1.5" strokeLinecap="round"/>
-                </svg>
-              </div>
-              <span style={{ color: '#4a5e72', fontSize: 12 }}>Hero Image</span>
-            </div>
+          {/* Hero image */}
+          <div className="rounded-2xl overflow-hidden shadow-card-hover">
+            <Image
+              src="/hero-lium.png"
+              alt="LIUM Energy — Asset Dashboard"
+              width={720}
+              height={480}
+              className="w-full h-auto object-cover"
+              priority
+            />
           </div>
         </div>
       </section>
 
-      {/* ── Divider bar ── */}
-      <div style={{ height: 4, backgroundColor: '#FF9900' }} />
-
-      {/* ── 3-column features ── */}
-      <section style={{ backgroundColor: '#ffffff', borderBottom: '1px solid #dde1e7' }}>
-        <div className="max-w-container mx-auto px-10 py-12 grid grid-cols-3 gap-8">
-          {[
-            { label: 'Tokenise Assets', sub: 'Onboard solar, wind, and grid projects with standardised documentation.', icon: '⚡' },
-            { label: 'Match Investors', sub: 'Connect with institutional capital through a compliant deal room.', icon: '🔗' },
-            { label: 'Close Faster', sub: 'Automated workflows take projects from listing to funded in days.', icon: '✓' },
-          ].map((item) => (
-            <div key={item.label} style={{ borderLeft: '3px solid #FF9900', paddingLeft: 20 }}>
-              {/* Image placeholder */}
+      {/* ── Features ── */}
+      <section className="bg-background py-16">
+        <div className="max-w-container mx-auto px-margin-desktop">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {FEATURES.map(({ icon, title, description }) => (
               <div
-                style={{ backgroundColor: '#F2F3F3', border: '1px solid #dde1e7', borderRadius: 4, height: 160, marginBottom: 16 }}
-                className="flex items-center justify-center"
+                key={title}
+                className="bg-surface-container-lowest rounded-2xl border border-outline-variant shadow-card overflow-hidden hover:shadow-card-hover transition-all"
               >
-                <div className="text-center">
-                  <div style={{ fontSize: 28, marginBottom: 6 }}>{item.icon}</div>
-                  <span style={{ color: '#8a9bb0', fontSize: 11 }}>Image</span>
+                <div className="bg-surface-container-high h-44 flex items-center justify-center border-b border-outline-variant">
+                  <span className="material-symbols-outlined text-[120px] text-primary">{icon}</span>
+                </div>
+                <div className="p-6">
+                  <h3 className="text-headline-md text-on-surface mb-2">{title}</h3>
+                  <p className="text-body-base text-on-surface-variant leading-relaxed">{description}</p>
                 </div>
               </div>
-              <h3 style={{ color: '#0d1117', fontSize: 16, fontWeight: 700, marginBottom: 6 }}>{item.label}</h3>
-              <p style={{ color: '#5f6b7a', fontSize: 14, lineHeight: 1.6 }}>{item.sub}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── Stats bar ── */}
-      <section style={{ backgroundColor: '#232F3E' }}>
-        <div className="max-w-container mx-auto px-10 py-8 grid grid-cols-4 gap-8">
-          {[
-            { value: '$2.4B', label: 'Assets Onboarded' },
-            { value: '140+', label: 'Active Projects' },
-            { value: '60+', label: 'Institutional Investors' },
-            { value: '12', label: 'Jurisdictions' },
-          ].map((stat) => (
-            <div key={stat.label} className="text-center">
-              <div style={{ color: '#FF9900', fontSize: 28, fontWeight: 700, letterSpacing: '-0.02em' }}>{stat.value}</div>
-              <div style={{ color: '#8a9bb0', fontSize: 13, marginTop: 4 }}>{stat.label}</div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── Footer ── */}
-      <footer style={{ backgroundColor: '#1a2530', borderTop: '1px solid #2e3f52' }}>
-        <div className="max-w-container mx-auto px-10 py-6 flex items-center justify-between">
-          <span style={{ color: '#FF9900', fontWeight: 700, fontSize: 16 }}>LIUM</span>
-          <span style={{ color: '#4a5e72', fontSize: 12 }}>© 2026 LIUM Energy Network. All rights reserved.</span>
-          <div className="flex gap-6">
-            {['Privacy', 'Terms', 'Contact'].map((l) => (
-              <a key={l} href="#" style={{ color: '#8a9bb0', fontSize: 12 }} className="hover:text-white transition-colors">{l}</a>
             ))}
           </div>
         </div>
-      </footer>
+      </section>
 
+      {/* ── Stats ── */}
+      <section className="bg-surface-container-low py-12 border-y border-outline-variant">
+        <div className="max-w-container mx-auto px-margin-desktop grid grid-cols-2 md:grid-cols-4 gap-8">
+          {STATS.map(({ value, label }) => (
+            <div key={label} className="text-center">
+              <p className="text-3xl font-bold text-primary">{value}</p>
+              <p className="text-caption text-on-surface-variant mt-1">{label}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── CTA Banner ── */}
+      <section className="bg-secondary py-16">
+        <div className="max-w-container mx-auto px-margin-desktop text-center">
+          <h2 className="text-headline-md text-white mb-3">Ready to get started?</h2>
+          <p className="text-body-base text-secondary-fixed-dim mb-8 max-w-lg mx-auto">
+            Join the growing network of developers, financiers, and investors building the next generation of energy infrastructure.
+          </p>
+          <CtaBannerLink />
+        </div>
+      </section>
+
+      <Footer />
     </div>
   )
 }

@@ -40,14 +40,19 @@ export default function SignInPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen flex flex-col bg-surface-container-low">
       <TopNav />
-      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-64px)] px-4">
-        <div className="w-full max-w-sm">
-          <div className="mb-8 text-center">
-            <h1 className="text-3xl font-bold text-on-surface mb-1">Welcome back</h1>
-            <p className="text-on-surface-variant">Sign in to your LIUM Energy account</p>
-          </div>
+
+      {/* Brand strip */}
+      <div className="bg-primary py-10 px-4 text-center">
+        <p className="text-label-caps text-primary-fixed mb-2">LIUM Energy Network</p>
+        <h1 className="text-headline-md text-white">Welcome back</h1>
+        <p className="text-caption text-primary-fixed mt-1">Sign in to your account</p>
+      </div>
+
+      {/* Form card */}
+      <div className="flex justify-center px-4 py-10 flex-1">
+        <div className="w-full max-w-sm bg-white rounded-2xl shadow-card-hover p-8 border border-outline-variant/20">
           <form onSubmit={handleSubmit} className="space-y-5">
             <Input label="Email" type="email" value={form.email} onChange={set('email')} required placeholder="you@company.com" />
             <Input label="Password" type="password" value={form.password} onChange={set('password')} required placeholder="Your password" />
