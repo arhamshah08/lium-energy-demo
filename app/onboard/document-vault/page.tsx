@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { Stepper } from '@/components/onboard/stepper'
 import { DocumentVaultForm } from '@/components/onboard/document-vault-form'
-import { getProject } from '@/lib/store'
+import { getProjectById } from '@/lib/store'
 
 interface Props {
   searchParams: Promise<{ id?: string }>
@@ -11,7 +11,7 @@ export default async function DocumentVaultPage({ searchParams }: Props) {
   const { id } = await searchParams
   if (!id) redirect('/onboard/project-details')
 
-  const project = getProject(id)
+  const project = await getProjectById(id)
   if (!project) redirect('/onboard/project-details')
 
   return (
