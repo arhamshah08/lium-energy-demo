@@ -1,12 +1,11 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { projectsApi } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Card, CardBody, CardFooter } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
-import { useAuth } from '@/components/auth/auth-context'
 import type { DocumentRecord } from '@/types'
 
 type DocSlot = {
@@ -18,64 +17,22 @@ type DocSlot = {
 }
 
 const DOC_SLOTS: DocSlot[] = [
-  { type: 'TECHNICAL_AUDIT',      label: 'TECHNICAL AUDIT',       icon: 'upload_file',  hint: 'PDF, MAX 50MB', required: true  },
-  { type: 'PPA_AGREEMENT',        label: 'PPA AGREEMENT',         icon: 'contract',     hint: 'PDF, DOCX',     required: true  },
-  { type: 'INTERCONNECTION_STUDY',label: 'INTERCONNECTION STUDY', icon: 'account_tree', hint: 'PDF',           required: false },
-  { type: 'INSURANCE_CERTIFICATE',label: 'INSURANCE CERTIFICATE', icon: 'verified',     hint: 'PDF, PNG',      required: false },
+  { type: 'TECHNICAL_AUDIT',       label: 'TECHNICAL AUDIT',       icon: 'upload_file',  hint: 'PDF, MAX 50MB', required: true  },
+  { type: 'PPA_AGREEMENT',         label: 'PPA AGREEMENT',         icon: 'contract',     hint: 'PDF, DOCX',     required: true  },
+  { type: 'INTERCONNECTION_STUDY', label: 'INTERCONNECTION STUDY', icon: 'account_tree', hint: 'PDF',           required: false },
+  { type: 'INSURANCE_CERTIFICATE', label: 'INSURANCE CERTIFICATE', icon: 'verified',     hint: 'PDF, PNG',      required: false },
 ]
-
-type ParseState = {
-  status: 'idle' | 'parsing' | 'done' | 'error'
-  fields?: Record<string, string | null>
-  error?: string
-}
-
-function fileToBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => resolve((reader.result as string).split(',')[1])
-    reader.onerror = reject
-    reader.readAsDataURL(file)
-  })
-}
 
 export function DocumentVaultForm({ projectId }: { projectId: string }) {
   const router = useRouter()
-  const { token } = useAuth()
   const [files, setFiles] = useState<Record<string, File>>({})
-  const [parseStates, setParseStates] = useState<Record<string, ParseState>>({})
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
-
-  const parseFile = useCallback(async (type: DocumentRecord['type'], file: File) => {
-    setParseStates(prev => ({ ...prev, [type]: { status: 'parsing' } }))
-    try {
-      const fileBase64 = await fileToBase64(file)
-      const mimeType = file.type || 'application/pdf'
-      const res = await fetch(`/api/projects/${projectId}/documents/parse`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({ docType: type, fileBase64, filename: file.name, mimeType }),
-      })
-      const json = await res.json()
-      if (json.ok) {
-        setParseStates(prev => ({ ...prev, [type]: { status: 'done', fields: json.data.extracted } }))
-      } else {
-        setParseStates(prev => ({ ...prev, [type]: { status: 'error', error: json.error?.message } }))
-      }
-    } catch {
-      setParseStates(prev => ({ ...prev, [type]: { status: 'error', error: 'Failed to parse document' } }))
-    }
-  }, [projectId, token])
 
   function handleFile(type: DocumentRecord['type'], fileList: FileList | null) {
     const file = fileList?.[0]
     if (!file) return
     setFiles(prev => ({ ...prev, [type]: file }))
-    parseFile(type, file)
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -87,7 +44,6 @@ export function DocumentVaultForm({ projectId }: { projectId: string }) {
     const documents = Object.entries(files).map(([type, file]) => ({
       type: type as DocumentRecord['type'],
       filename: file.name,
-      parsed: parseStates[type]?.fields,
     }))
     const res = await projectsApi.updateDocuments(projectId, { documents })
     setSubmitting(false)
@@ -108,7 +64,6 @@ export function DocumentVaultForm({ projectId }: { projectId: string }) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {DOC_SLOTS.map(({ type, label, icon, hint, required }) => {
               const file = files[type]
-              const ps = parseStates[type]
               return (
                 <div key={type} className="space-y-2">
                   <label className="block group cursor-pointer">
@@ -144,31 +99,6 @@ export function DocumentVaultForm({ projectId }: { projectId: string }) {
                       )}
                     </div>
                   </label>
-
-                  {ps?.status === 'parsing' && (
-                    <div className="flex items-center gap-2 px-3 py-2 bg-primary-container/20 rounded-lg">
-                      <span className="w-3 h-3 border border-primary border-t-transparent rounded-full animate-spin shrink-0" />
-                      <p className="text-caption text-on-primary-container">Parsing with AI...</p>
-                    </div>
-                  )}
-
-                  {ps?.status === 'done' && ps.fields && (
-                    <div className="bg-surface-container-low rounded-lg border border-outline-variant/40 p-3">
-                      <p className="text-label-caps text-secondary font-bold tracking-widest mb-2">EXTRACTED FIELDS</p>
-                      <div className="space-y-1">
-                        {Object.entries(ps.fields).map(([key, val]) => val && (
-                          <div key={key} className="flex justify-between gap-4">
-                            <span className="text-caption text-on-surface-variant capitalize shrink-0">{key.replace(/_/g, ' ')}</span>
-                            <span className="text-caption text-on-surface font-medium text-right">{val}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {ps?.status === 'error' && (
-                    <p className="text-caption text-error px-2">Parse failed: {ps.error}</p>
-                  )}
                 </div>
               )
             })}
