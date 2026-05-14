@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { TopNav } from '@/components/layout/top-nav'
 import { useAuth } from '@/components/auth/auth-context'
+import { roleHomePath } from '@/lib/auth-utils'
 
 const ROLES = [
   {
@@ -49,7 +50,7 @@ export default function SignUpPage() {
   const router = useRouter()
 
   useEffect(() => {
-    if (!loading && user) router.replace('/projects')
+    if (!loading && user) router.replace(roleHomePath(user.role))
   }, [user, loading, router])
 
   if (loading || user) return null

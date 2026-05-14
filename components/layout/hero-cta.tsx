@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useAuth } from '@/components/auth/auth-context'
+import { roleHomePath } from '@/lib/auth-utils'
 
 export function HeroCta() {
   const { user, loading } = useAuth()
@@ -12,7 +13,7 @@ export function HeroCta() {
     return (
       <div className="flex flex-wrap gap-3">
         <Link
-          href="/projects"
+          href={roleHomePath(user.role)}
           className="inline-flex items-center gap-2 bg-white text-primary rounded-xl px-8 py-3 text-label-caps font-bold hover:opacity-90 transition-all shadow-card"
         >
           Go to Dashboard
@@ -44,7 +45,7 @@ export function CtaBannerLink() {
 
   if (loading) return null
 
-  const href = user ? '/projects' : '/signup'
+  const href = user ? roleHomePath(user.role) : '/signup'
   const label = user ? 'Go to Dashboard' : 'Join LIUM Energy'
 
   return (

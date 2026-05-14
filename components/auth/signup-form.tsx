@@ -1,12 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { TopNav } from '@/components/layout/top-nav'
 import { Input, Select } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/components/auth/auth-context'
+import { roleHomePath } from '@/lib/auth-utils'
 
 const FINANCIER_TYPES = [
   { value: '', label: 'Select type...' },
@@ -27,8 +28,14 @@ export interface SignupFormConfig {
 
 export function SignupForm({ config }: { config: SignupFormConfig }) {
   const router = useRouter()
-  const { signIn } = useAuth()
+  const { user, loading: authLoading, signIn } = useAuth()
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (!authLoading && user) router.replace(roleHomePath(user.role))
+  }, [user, authLoading, router])
+
+  if (authLoading || user) return null
   const [error, setError] = useState('')
   const [form, setForm] = useState({
     companyName: '',
@@ -67,7 +74,7 @@ export function SignupForm({ config }: { config: SignupFormConfig }) {
       const data = await res.json()
       if (!res.ok) { setError(data.error || 'Something went wrong'); return }
       signIn(data.token)
-      router.push('/projects')
+      router.push(roleHomePath(config.role))
     } catch {
       setError('Cannot connect to server')
     } finally {

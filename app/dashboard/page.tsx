@@ -28,10 +28,10 @@ export default async function DashboardPage() {
       {/* KPI row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Total AUM',         value: `₹${totalAUM.toLocaleString()} Mn`, icon: 'payments',        accent: 'text-secondary', href: '/tokenise' },
-          { label: 'Tokens Issued',     value: tokens.length,                       icon: 'token',           accent: '',               href: '/tokenise' },
-          { label: 'Securities Listed', value: listedPools,                         icon: 'storefront',      accent: 'text-primary',   href: '/marketplace' },
-          { label: 'Subscribed',        value: `₹${totalSubscribed.toLocaleString()} Mn`, icon: 'account_balance', accent: 'text-secondary', href: '/marketplace' },
+          { label: 'Total AUM',         value: `$${totalAUM.toLocaleString()}M`, icon: 'payments',        accent: 'text-secondary', href: '/tokenise' },
+          { label: 'Tokens Issued',     value: tokens.length,                    icon: 'token',           accent: '',               href: '/tokenise' },
+          { label: 'Securities Listed', value: listedPools,                      icon: 'storefront',      accent: 'text-primary',   href: '/marketplace' },
+          { label: 'Subscribed',        value: `$${totalSubscribed.toLocaleString()}M`, icon: 'account_balance', accent: 'text-secondary', href: '/marketplace' },
         ].map(({ label, value, icon, accent, href }) => (
           <Link key={label} href={href} className="bg-surface-container-lowest rounded-xl border border-outline-variant/60 p-5 shadow-card hover:shadow-card-hover transition-all">
             <div className="flex items-center gap-2 mb-2">
@@ -78,9 +78,9 @@ export default async function DashboardPage() {
                 <p className="text-caption text-on-surface-variant mb-3">{token.issuedTo}</p>
                 <div className="grid grid-cols-2 gap-3">
                   {[
-                    { label: 'Nominal',  value: `₹${token.nominalValueINR.toLocaleString()} Mn` },
+                    { label: 'Nominal',  value: `$${token.nominalValueINR.toLocaleString()}M` },
                     { label: 'Status',   value: token.status },
-                    { label: 'VGF Out', value: `₹${token.vgfMilestones.filter(v => v.status === 'RELEASED').reduce((s, v) => s + v.amountINR, 0)} Mn` },
+                    { label: 'ITC Out',  value: `$${token.vgfMilestones.filter(v => v.status === 'RELEASED').reduce((s, v) => s + v.amountINR, 0)}M` },
                     { label: 'Ops',      value: token.operations.length },
                   ].map(({ label, value }) => (
                     <div key={label} className="bg-surface-container-low rounded-lg p-2.5">
@@ -171,7 +171,7 @@ export default async function DashboardPage() {
                       <span className="text-[10px] font-bold text-on-surface-variant uppercase">{t.class}</span>
                       <span className="text-[10px] font-bold text-on-surface">{t.rating}</span>
                     </div>
-                    <p className="text-caption font-bold text-on-surface">₹{t.sizeINR.toLocaleString()} Mn</p>
+                    <p className="text-caption font-bold text-on-surface">${t.sizeINR.toLocaleString()}M</p>
                     <p className="text-[10px] text-on-surface-variant">{t.coupon}% · {t.tenorYears}yr</p>
                     <div className="h-1 bg-outline-variant/30 rounded-full mt-2 overflow-hidden">
                       <div

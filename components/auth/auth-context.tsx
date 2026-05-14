@@ -5,7 +5,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 interface AuthUser {
   id: string
   email: string
-  role: 'developer' | 'financier'
+  role: 'developer' | 'financier' | 'securitisation_agent' | 'portfolio_manager' | 'investor'
   fullName: string
 }
 

@@ -13,7 +13,7 @@ export async function GET(req: NextRequest): Promise<NextResponse<ApiResponse<Pr
     )
   }
 
-  const rows = user.role === 'financier'
+  const rows = (user.role === 'financier' || user.role === 'securitisation_agent')
     ? await getProjectsByStatus('SUBMITTED')
     : await getProjectsByUserId(user.id)
 
