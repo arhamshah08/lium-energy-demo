@@ -64,16 +64,19 @@ async function createDediSubscriberRecord(
     const registryName = buildRegistryName(companyName, fullName, role)
     const countries = ['USA']
     const type = role === 'financier' ? 'BAP' : 'BPP'
+    const companyBase = (companyName || fullName).toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '')
+    const recordName = `${companyBase}-${type}`
+    const subscriberId = `${registryName}.lium.beckn.io`
     const url = `https://api.dedi.global/dedi/${DEDI_NAMESPACE}/${registryName}/save-record-as-draft?publish=true`
     const body = {
-      record_name: userId,
+      record_name: recordName,
       description: `${companyName || fullName} ${role} ${type} record`,
       details: {
         url: `https://lium.beckn.io/${userId}`,
         type,
         domain: '*',
         countries,
-        subscriber_id: userId,
+        subscriber_id: subscriberId,
         signing_public_key: publicKeyBase64,
       },
       meta: { created_by: 'lium_energy' },
@@ -92,8 +95,17 @@ async function createDediSubscriberRecord(
     const json = await res.json()
     console.log('[DeDi] saveRecord response:', res.status, JSON.stringify(json))
     if (!res.ok) return null
-    // DeDi returns empty data object — use userId (record_name) as the identifier
-    return json.data?.record_id ?? userId
+
+    // Lookup the newly created record to get the actual record_id from DeDi
+    const lookupUrl = `https://api.dedi.global/dedi/lookup/${DEDI_NAMESPACE}/${registryName}/${recordName}`
+    console.log('[DeDi] recordLookup URL:', lookupUrl)
+    const lookupRes = await fetch(lookupUrl, {
+      method: 'GET',
+      headers: { 'Authorization': `Bearer ${DEDI_API_KEY}` },
+    })
+    const lookupJson = await lookupRes.json()
+    console.log('[DeDi] recordLookup response:', lookupRes.status, JSON.stringify(lookupJson))
+    return lookupJson.data?.record_id ?? lookupJson.record_id ?? recordName
   } catch (e) {
     console.error('[DeDi] saveRecord error:', e)
     return null
@@ -116,7 +128,7 @@ async function createDediParticipantsRecord(
       details: {
         url: `https://api.dedi.global/dedi/lookup/${DEDI_NAMESPACE}/${registryName}`,
         type: 'Registry',
-        subscriber_id: userId,
+        subscriber_id: `${registryName}.lium.beckn.io`,
       },
       meta: { created_by: 'lium_energy' },
       valid_till: '2035-12-31T23:59:59Z',
