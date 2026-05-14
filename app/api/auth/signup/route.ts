@@ -63,7 +63,7 @@ async function createDediSubscriberRecord(
   try {
     const registryName = buildRegistryName(companyName, fullName, role)
     const countries = ['USA']
-    const type = role === 'financier' ? 'BAP' : 'BPP'
+    const type = (role === 'financier' || role === 'securitisation_agent') ? 'BAP' : 'BPP'
     const companyBase = (companyName || fullName).toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '')
     const recordName = `${companyBase}-${type}`
     const subscriberId = `${registryName}.lium.beckn.io`
@@ -120,7 +120,7 @@ async function createDediParticipantsRecord(
 ): Promise<string | null> {
   try {
     const registryName = buildRegistryName(companyName, fullName, role)
-    const type = role === 'financier' ? 'BAP' : 'BPP'
+    const type = (role === 'financier' || role === 'securitisation_agent') ? 'BAP' : 'BPP'
     const url = `https://api.dedi.global/dedi/${DEDI_NAMESPACE}/lium_energy_participants/save-record-as-draft?publish=true`
     const body = {
       record_name: registryName,
@@ -182,7 +182,7 @@ export async function POST(req: NextRequest) {
   let becknRecordId: string | null = null
   let participantsRecordId: string | null = null
 
-  if (role === 'developer' || role === 'financier') {
+  if (role === 'developer' || role === 'financier' || role === 'securitisation_agent') {
     // Wait for DeDi registry to be ready before publishing records
     await new Promise(resolve => setTimeout(resolve, 3000))
 
