@@ -327,6 +327,481 @@ Revenue scales with the capacity degradation schedule. Opex grows ~3% p.a. Debt 
 
 </details>
 
+### Qualify · Network
+
+> Submitted when a Project Developer seeks to qualify an **operating** asset for tokenised securitisation. Distinct from the Catalog phase (pre-COD financing). Each operating asset requires its own Qualify submission, assessed against seven gates (G1–G7).
+>
+> **Reference implementation:** LIUM-US-BESS-2024-003 | Permian Basin BESS 100 MW / 200 MWh, Ector County TX (ERCOT)
+
+| Finternet | Beckn |
+|-----------|-------|
+| Securitisation asset ID (`LIUM-{ISO2}-{TYPE}-{YEAR}-{SEQ}`) | Beckn subscriber ID (originating developer) |
+| Asset type + subtype (BESS / LFP / grid-scale) | Qualify submission ID |
+| Balancing authority (ERCOT / PJM / CAISO / MISO / NYISO / SPP) | Qualification status callback URL |
+| SPV entity details (name, jurisdiction, entity type) | Pool discovery endpoint (consumed by Securities Agent) |
+| True sale status + bankruptcy remoteness opinion status | Gate status webhook (G1–G7 pass/fail/review per gate) |
+| LQ composite score + consecutive months above threshold | — |
+| UNITS oracle integration status + on-chain asset ID | — |
+| FERC authorization type (EWG / QF / Market-Based Rate) | — |
+| SEC Regulation AB / Rule 144A status | — |
+| Credit rating status + rating agency | — |
+
+### Qualify · App
+
+#### Physical Asset
+
+| Field | Value (example: Permian Basin BESS) |
+|-------|--------------------------------------|
+| Asset name | Permian Basin BESS — Ector County Unit 1 |
+| Asset LIUM ID | `LIUM-US-BESS-2024-003` |
+| Asset type | Standalone BESS, grid-scale, ERCOT-connected |
+| Battery chemistry | Lithium Iron Phosphate (LFP) — Grid-Scale |
+| State | Texas (TX) |
+| GPS coordinates | 31.8457° N, 102.3676° W |
+| Balancing authority | ERCOT |
+| Installed capacity | 100 MW |
+| Energy capacity | 200 MWh |
+| Duration | 2-hour system |
+| Commercial Operation Date | 2024-06-01 |
+| Expected asset life | 20 years |
+| Remaining useful life | 18 years |
+| OEM / Manufacturer | Fluence (CATL cells) |
+| EPC Contractor | Mortenson Energy |
+| O&M Service Provider | Fluence Asset Management Services |
+| Grid interconnection voltage | 345 kV |
+| P50 annual generation | 219,000 MWh/yr |
+| Actual availability (trailing 12m) | 97.8% |
+| Degradation rate | 1.5% per year |
+| Round-trip efficiency (AC–AC) | 87% |
+| Cycles to 80% SOH | 6,000 cycles (OEM warranty) |
+| SoC operating window | 10% – 90% |
+
+#### Revenue Contract
+
+| Field | Detail |
+|-------|--------|
+| Contract type | Capacity Agreement (tolled dispatch) |
+| Offtaker | Luminant Energy LLC (Vistra Corp subsidiary) |
+| Offtaker credit rating | BBB– (S&P) / Baa3 (Moody's) |
+| Offtaker entity type | Investment-grade corporate |
+| Contract execution date | 2023-01-15 |
+| Contract start date (COD) | 2024-06-01 |
+| Contract tenor | 15 years |
+| Contract expiry | 2039-05-31 |
+| Annual contracted revenue | $22.5M (Year 1) |
+| Revenue currency | USD |
+| Escalation mechanism | Fixed rate — 1.0% per year |
+| Availability guarantee | 95% annual average |
+| Take-or-pay clause | Yes — capacity payment regardless of dispatch |
+| Contract assignable to SPV | Yes — consent obtained from Luminant |
+| Assignment consent status | Obtained |
+| Secondary revenue | ERCOT ancillary services (FFR / ECRS) — $1.2M/yr est. |
+| Change-in-law protection | Full protection |
+| Force majeure | Standard NAESB provisions |
+| Termination payment | Full NPV recovery (Schedule B) |
+| Dispute resolution | AAA arbitration — New York seat |
+
+#### Capacity Degradation Schedule
+
+Minimum dispatchable capacity the developer must maintain each year as a % of original COD capacity:
+
+| Year | Min. Dispatchable Capacity |
+|:----:|:--------------------------:|
+| 1 | 97.50% |
+| 2 | 95.00% |
+| 3 | 92.50% |
+| 4 | 90.00% |
+| 5 | 87.50% |
+| 6 | 85.00% |
+| 7 | 82.50% |
+| 8 | 80.00% |
+| 9 | 78.50% |
+| 10 | 75.00% |
+| 11 | 72.50% |
+| 12 | 70.00% |
+
+#### Financial Summary
+
+| Field | Value |
+|-------|-------|
+| Total project CAPEX | $195.0M |
+| Equity component | $48.75M (25%) |
+| Debt component | $131.25M (67.3%) |
+| ITC / DOE grant | $15.0M (7.7%) — 30% ITC on qualifying BESS CAPEX |
+| Leverage ratio | 67.3% |
+| Base year revenue (Y1) | $22.5M |
+| Annual OPEX (Y1) | $3.8M |
+| Annual debt service (Y1–Y8) | $14.2M |
+| EBITDA margin | 83.1% |
+| Project IRR (post-tax) | 11.2% |
+| Equity IRR (post-tax) | 17.4% |
+| Average cost of debt | 6.8% |
+| DSCR (Year 1) | 1.32x |
+| Average DSCR (Y1–Y12) | 1.21x |
+| Minimum DSCR (Year 6) | 1.08x |
+| LQ composite score | 0.94 |
+| LQ consecutive months ≥ 0.80 | 14 months |
+| O&M model | 15-year LTSA with Fluence Asset Management |
+| ITC support | Yes — Inflation Reduction Act §48E |
+
+#### 12-Year Cash Flow Timeseries
+
+Revenue scales with the capacity degradation schedule. OPEX grows ~3% p.a. Debt service is fixed through Year 8, then amortizes. Years 9–12 are equity free-cash-flow years after senior debt is retired.
+
+| Year | COD Year | Capacity % | Revenue ($M) | OPEX ($M) | Debt Service ($M) | DSCR |
+|:----:|:--------:|:----------:|:------------:|:---------:|:-----------------:|:----:|
+| 1 | 2025 | 97.5% | 22.50 | 3.80 | 14.20 | 1.32 |
+| 2 | 2026 | 95.0% | 21.94 | 3.91 | 14.20 | 1.27 |
+| 3 | 2027 | 92.5% | 21.37 | 4.03 | 14.20 | 1.22 |
+| 4 | 2028 | 90.0% | 20.81 | 4.15 | 14.20 | 1.17 |
+| 5 | 2029 | 87.5% | 20.25 | 4.28 | 14.20 | 1.12 |
+| 6 | 2030 | 85.0% | 19.69 | 4.41 | 14.20 | 1.08 |
+| 7 | 2031 | 82.5% | 19.12 | 4.54 | 10.65 | 1.36 |
+| 8 | 2032 | 80.0% | 18.56 | 4.68 | 10.65 | 1.31 |
+| 9 | 2033 | 78.5% | 18.19 | 4.82 | — | — |
+| 10 | 2034 | 75.0% | 17.44 | 4.97 | — | — |
+| 11 | 2035 | 72.5% | 16.88 | 5.12 | — | — |
+| 12 | 2036 | 70.0% | 16.31 | 5.27 | — | — |
+
+#### Legal & SPV Structure
+
+| Field | Status |
+|-------|--------|
+| Asset owner | Permian Basin Storage LLC |
+| EIN | 87-1234567 |
+| Land ownership type | Leasehold (private) — 25-year ground lease |
+| Land lease term remaining | 19 years |
+| Title search | Yes — clear (First American Title, 2024-03-10) |
+| Encumbrances | None |
+| SPV formed | Yes — operational |
+| SPV name | LIUM Pool 2024-03 LLC |
+| SPV jurisdiction | Delaware (LLC) |
+| True sale achieved | Yes — legal opinion delivered |
+| Bankruptcy remoteness opinion | Obtained (Latham & Watkins LLP, 2024-04-01) |
+| FERC consent for transfer | Not required (non-jurisdictional facility) |
+| State PUC transfer consent | Not required (ERCOT deregulated) |
+| Material litigation | None |
+| Bankruptcy proceedings | None |
+
+#### Key Documents
+
+| Document | Status |
+|----------|--------|
+| Capacity Agreement (Luminant) | Uploaded |
+| Land lease (Ector County Ranch LLC) | Uploaded |
+| ERCOT Large Generator Interconnection Agreement (LGIA) | Uploaded |
+| O&M Agreement (Fluence Asset Management) | Uploaded |
+| Insurance policies (Liberty Mutual — all-risk + BI) | Uploaded |
+| True sale legal opinion (Latham & Watkins) | Uploaded |
+| SPV bankruptcy remoteness opinion | Uploaded |
+| Independent Engineer report (Burns & McDonnell) | Uploaded |
+
+#### Credit Enhancement
+
+| Field | Value |
+|-------|-------|
+| Overcollateralisation | 22% |
+| Cash reserve fund | $4.8M |
+| Cash reserve as % of pool | 2.5% |
+| Excess spread | 195 bps/year |
+| Subordination structure | Senior / Mezzanine / Junior |
+| Senior tranche size | $90.0M |
+| Senior tranche coupon | 7.25% p.a. |
+| Mezzanine tranche size | $65.0M |
+| Mezzanine tranche coupon | 9.75% p.a. |
+| Junior tranche size | $32.5M |
+| Junior tranche coupon | 13.5% p.a. |
+| Credit rating obtained | Yes — tranche rated |
+| Rating agency | Kroll Bond Rating Agency (KBRA) |
+| Senior tranche rating | AAA(sf) |
+| External guarantee | None |
+| Property insurance | In place — Liberty Mutual, all-risk, $210M coverage |
+| Business interruption insurance | In place — 18-month revenue replacement |
+| Insurance coverage period | 15 years (matches contract tenor) |
+| Insurance assigned to trustee | Yes — US Bank National Association (Security Trustee) |
+
+#### Technology & Oracle (IEEE 2030.5 / NERC CIP)
+
+| Field | Status |
+|-------|--------|
+| Primary telemetry standard | IEEE 2030.5 |
+| IEEE 2030.5 compliant | Yes |
+| DER client certification | Certified — SunSpec Alliance |
+| IEEE 2030.5 server endpoint | `https://ems.permianbess-lium.com:443/api/v1/` |
+| TLS certificate valid | Yes (DigiCert, expiry 2026-06-01) |
+| Authentication method | OAuth2 Client Credentials |
+| OAuth2 token endpoint | `https://auth.ems.permianbess-lium.com/oauth/token` |
+| NERC CIP compliance | Compliant — CIP-002 through CIP-013 (Medium Impact BES) |
+| MirrorUsagePoint configured | Yes |
+| DERControl interface | Yes — ERCOT dispatch signals integrated |
+| Real-time power (kW) | Yes |
+| State of charge (%) | Yes |
+| Cumulative energy (kWh) | Yes |
+| Alarm / fault event stream | Yes |
+| Data polling interval | 60 seconds |
+| Data latency (max observed) | 7 seconds |
+| UNITS oracle integration tested | Yes — Passed |
+| Oracle test report | `LIUM-ORC-TEST-2024-003-v1.pdf` |
+| Historical data availability | 14 months |
+| On-chain asset ID | `UNITS-BESS-US-003` |
+
+#### Regulatory & Compliance
+
+| Permit / Approval | Authority | Status |
+|-------------------|-----------|--------|
+| FERC EWG registration | FERC | Registered (Docket No. EG24-XXX) |
+| ERCOT Large Generator Interconnection (LGIA) | ERCOT | Executed |
+| ERCOT Transmission Service Agreement (TSA) | ERCOT | Executed |
+| Revenue-grade metering approval | ERCOT (ANSI C12.20 Class 0.2) | Approved |
+| ERCOT market registration | ERCOT | Registered as QSE |
+| NEPA review | DOE (site on private land) | Categorical Exclusion (10 CFR 1021) |
+| EPA air permit | EPA / TCEQ | Not required (no emissions) |
+| Army Corps §404 (wetlands) | USACE | Not required (upland site) |
+| ESA / USFWS clearance | USFWS | Not required (no listed species on site) |
+| Hazardous materials declaration | EPA RCRA / Ector County Fire | Submitted |
+| Building / structural permit | Ector County, TX | Obtained |
+| FAA height clearance | FAA (Part 77) | Not required (no tall structures) |
+| SEC Regulation AB II | SEC | Compliant |
+| SEC Rule 144A / Reg S | SEC | Applicable — institutional private placement |
+| SPV Delaware entity filing | Delaware SOS | Active |
+| Texas state securities (Blue Sky) | Texas SSB | Exempt (Rule 144A) |
+| Overall compliance status | Fully compliant |
+| Outstanding regulatory notices | None |
+| Last regulatory audit | 2025-02-14 (Norton Rose Fulbright LLP) |
+
+#### Qualification Gate Status
+
+| Gate | Name | Result | Score / Value |
+|:----:|------|:------:|---------------|
+| G1 | Physical Asset Gate | **PASS** | COD confirmed 2024-06-01 · 18 yrs remaining life · 100 MW capacity |
+| G2 | Revenue Contract Gate | **PASS** | 15-yr Capacity Agreement · Take-or-pay · Assignment consent obtained |
+| G3 | Cash Flow Gate | **PASS** | Avg DSCR 1.21x · LQ 0.94 · 14 consecutive months ≥ 0.80 |
+| G4 | Legal & Title Gate | **PASS** | Clear title · Delaware SPV operational · True sale opinion delivered |
+| G5 | Credit Enhancement Gate | **PASS** | OC 22% · Cash reserve 2.5% · Insurance assigned to trustee |
+| G6 | Technology & Oracle Gate | **PASS** | IEEE 2030.5 certified · Oracle tested · 7s latency |
+| G7 | Regulatory Gate | **PASS** | FERC EWG registered · SEC Reg AB compliant · No outstanding notices |
+| **Overall** | | **QUALIFIED** | Full Securitisation — Senior AAA(sf) / Mezzanine BBB(sf) / Junior BB(sf) |
+
+<details>
+<summary><strong>Example API Payload</strong></summary>
+
+```json
+{
+  "request_id": "req_pd_qualify_001",
+  "actor": "project_developer",
+  "action": "submit_securitisation_qualification",
+  "asset_lium_id": "LIUM-US-BESS-2024-003",
+  "finternet_payload": {
+    "cat1_physical_asset": {
+      "asset_name": "Permian Basin BESS — Ector County Unit 1",
+      "asset_type": "BESS",
+      "asset_subtype": "Lithium Iron Phosphate (LFP) — Grid-Scale",
+      "state": "TX",
+      "gps_coordinates": { "lat": 31.8457, "lon": -102.3676 },
+      "balancing_authority": "ERCOT",
+      "installed_capacity_mw": 100,
+      "energy_capacity_mwh": 200,
+      "duration_hours": 2,
+      "cod_date": "2024-06-01",
+      "expected_asset_life_years": 20,
+      "remaining_useful_life_years": 18,
+      "oem_manufacturer": "Fluence (CATL cells)",
+      "om_service_provider": "Fluence Asset Management Services",
+      "grid_interconnection_kv": 345,
+      "p50_annual_generation_mwh": 219000,
+      "actual_availability_12m_pct": 97.8,
+      "degradation_rate_pct_per_year": 1.5,
+      "round_trip_efficiency_pct": 87,
+      "cycles_to_80pct_soh": 6000
+    },
+    "cat2_contract": {
+      "contract_type": "CAPACITY_AGREEMENT",
+      "offtaker_name": "Luminant Energy LLC",
+      "offtaker_credit_rating": "BBB- (S&P) / Baa3 (Moody's)",
+      "offtaker_entity_type": "INVESTMENT_GRADE_CORPORATE",
+      "contract_execution_date": "2023-01-15",
+      "contract_start_date": "2024-06-01",
+      "contract_tenor_years": 15,
+      "contract_expiry_date": "2039-05-31",
+      "annual_contracted_revenue_usd": 22500000,
+      "escalation_mechanism": "FIXED_RATE",
+      "escalation_rate_pct": 1.0,
+      "availability_guarantee_pct": 95,
+      "take_or_pay_clause": true,
+      "contract_assignable_to_spv": "YES",
+      "assignment_consent_status": "OBTAINED",
+      "secondary_revenue_type": "ANCILLARY_SERVICES",
+      "secondary_revenue_annual_usd": 1200000,
+      "change_in_law_protection": "FULL",
+      "force_majeure_provisions": "STANDARD",
+      "termination_payment_type": "FULL_NPV_RECOVERY",
+      "dispute_resolution_mechanism": "ARBITRATION_AAA"
+    },
+    "cat3_cash_flow": {
+      "total_project_capex_usd": 195000000,
+      "equity_component_usd": 48750000,
+      "debt_component_usd": 131250000,
+      "itc_ptc_grant_usd": 15000000,
+      "leverage_ratio_pct": 67.3,
+      "base_year_revenue_usd": 22500000,
+      "annual_opex_usd": 3800000,
+      "annual_debt_service_usd": 14200000,
+      "dscr_year_1": 1.32,
+      "dscr_average": 1.21,
+      "dscr_minimum": 1.08,
+      "dscr_minimum_year": 6,
+      "lq_availability_score": 0.978,
+      "lq_dscr_score": 0.914,
+      "lq_verification_score": 1.00,
+      "lq_degradation_factor": 0.00,
+      "lq_composite_score": 0.94,
+      "lq_consecutive_months_above_threshold": 14,
+      "capacity_degradation_schedule": [
+        { "year": 1,  "min_dispatchable_capacity_pct": 97.5 },
+        { "year": 2,  "min_dispatchable_capacity_pct": 95.0 },
+        { "year": 3,  "min_dispatchable_capacity_pct": 92.5 },
+        { "year": 4,  "min_dispatchable_capacity_pct": 90.0 },
+        { "year": 5,  "min_dispatchable_capacity_pct": 87.5 },
+        { "year": 6,  "min_dispatchable_capacity_pct": 85.0 },
+        { "year": 7,  "min_dispatchable_capacity_pct": 82.5 },
+        { "year": 8,  "min_dispatchable_capacity_pct": 80.0 },
+        { "year": 9,  "min_dispatchable_capacity_pct": 78.5 },
+        { "year": 10, "min_dispatchable_capacity_pct": 75.0 },
+        { "year": 11, "min_dispatchable_capacity_pct": 72.5 },
+        { "year": 12, "min_dispatchable_capacity_pct": 70.0 }
+      ],
+      "cash_flow_yearly_timeseries": [
+        { "year": 2025, "capacity_pct": 97.5, "revenue_usd": 22500000, "opex_usd": 3800000, "debt_service_usd": 14200000, "dscr": 1.32 },
+        { "year": 2026, "capacity_pct": 95.0, "revenue_usd": 21940000, "opex_usd": 3910000, "debt_service_usd": 14200000, "dscr": 1.27 },
+        { "year": 2027, "capacity_pct": 92.5, "revenue_usd": 21370000, "opex_usd": 4030000, "debt_service_usd": 14200000, "dscr": 1.22 },
+        { "year": 2028, "capacity_pct": 90.0, "revenue_usd": 20810000, "opex_usd": 4150000, "debt_service_usd": 14200000, "dscr": 1.17 },
+        { "year": 2029, "capacity_pct": 87.5, "revenue_usd": 20250000, "opex_usd": 4280000, "debt_service_usd": 14200000, "dscr": 1.12 },
+        { "year": 2030, "capacity_pct": 85.0, "revenue_usd": 19690000, "opex_usd": 4410000, "debt_service_usd": 14200000, "dscr": 1.08 },
+        { "year": 2031, "capacity_pct": 82.5, "revenue_usd": 19120000, "opex_usd": 4540000, "debt_service_usd": 10650000, "dscr": 1.36 },
+        { "year": 2032, "capacity_pct": 80.0, "revenue_usd": 18560000, "opex_usd": 4680000, "debt_service_usd": 10650000, "dscr": 1.31 },
+        { "year": 2033, "capacity_pct": 78.5, "revenue_usd": 18190000, "opex_usd": 4820000, "debt_service_usd": 0, "dscr": null },
+        { "year": 2034, "capacity_pct": 75.0, "revenue_usd": 17440000, "opex_usd": 4970000, "debt_service_usd": 0, "dscr": null },
+        { "year": 2035, "capacity_pct": 72.5, "revenue_usd": 16880000, "opex_usd": 5120000, "debt_service_usd": 0, "dscr": null },
+        { "year": 2036, "capacity_pct": 70.0, "revenue_usd": 16310000, "opex_usd": 5270000, "debt_service_usd": 0, "dscr": null }
+      ]
+    },
+    "cat4_legal": {
+      "asset_owner_legal_entity": "Permian Basin Storage LLC",
+      "ein": "87-1234567",
+      "land_ownership_type": "LEASEHOLD_PRIVATE",
+      "land_lease_term_remaining_years": 19,
+      "title_search_completed": "YES_CLEAR",
+      "encumbrances": "NONE",
+      "spv_formed": "YES_OPERATIONAL",
+      "spv_name": "LIUM Pool 2024-03 LLC",
+      "spv_jurisdiction": "Delaware",
+      "spv_entity_type": "LLC",
+      "true_sale_achieved": "YES",
+      "bankruptcy_remoteness_opinion": "OBTAINED",
+      "ferc_consent_for_transfer": "NOT_REQUIRED",
+      "state_puc_transfer_consent": "NOT_REQUIRED",
+      "material_litigation_pending": "NONE",
+      "bankruptcy_proceedings": "NONE",
+      "documents": {
+        "ppa_cppa": "UPLOADED",
+        "land_title": "UPLOADED",
+        "interconnection_agreement": "UPLOADED",
+        "epc_contract": "UPLOADED",
+        "om_agreement": "UPLOADED",
+        "insurance_policies": "UPLOADED"
+      }
+    },
+    "cat5_credit_enhancement": {
+      "overcollateralisation_pct": 22,
+      "cash_reserve_fund_usd": 4800000,
+      "cash_reserve_pct_of_pool": 2.5,
+      "excess_spread_bps": 195,
+      "subordination_structure": "SENIOR_MEZZ_JUNIOR",
+      "senior_tranche_size_usd": 90000000,
+      "senior_tranche_coupon_pct": 7.25,
+      "mezzanine_tranche_size_usd": 65000000,
+      "mezzanine_tranche_coupon_pct": 9.75,
+      "junior_tranche_size_usd": 32500000,
+      "junior_tranche_coupon_pct": 13.5,
+      "credit_rating_obtained": "YES_TRANCHE_RATED",
+      "rating_agency": "KBRA",
+      "senior_tranche_rating": "AAA(sf)",
+      "guarantee_type": "NONE",
+      "property_insurance": "IN_PLACE",
+      "insurer_name": "Liberty Mutual Insurance",
+      "business_interruption_insurance": "IN_PLACE",
+      "insurance_coverage_years": 15,
+      "insurance_assigned_to_trustee": "YES"
+    },
+    "cat6_technology": {
+      "primary_telemetry_standard": "IEEE_2030_5",
+      "ieee_2030_5_compliant": "YES",
+      "der_client_certification": "CERTIFIED_SUNSPEC",
+      "ieee_2030_5_server_endpoint": "https://ems.permianbess-lium.com:443/api/v1/",
+      "tls_certificate_valid": "YES",
+      "authentication_method": "OAUTH2_CLIENT_CREDENTIALS",
+      "oauth2_token_endpoint": "https://auth.ems.permianbess-lium.com/oauth/token",
+      "nerc_cip_compliance": "COMPLIANT",
+      "mirror_usage_point_configured": "YES",
+      "der_control_interface_available": "YES",
+      "realtime_power_kw_available": "YES",
+      "state_of_charge_available": "YES",
+      "cumulative_energy_kwh_available": "YES",
+      "alarm_fault_stream_available": "YES",
+      "data_polling_interval_seconds": 60,
+      "data_latency_max_seconds": 7,
+      "units_oracle_integration_tested": "YES_PASSED",
+      "oracle_test_report_reference": "LIUM-ORC-TEST-2024-003-v1.pdf",
+      "historical_data_availability_months": 14,
+      "on_chain_asset_id": "UNITS-BESS-US-003"
+    },
+    "cat7_regulatory": {
+      "ferc_authorization": "EWG_REGISTERED",
+      "interconnection_agreement": "EXECUTED",
+      "transmission_service_agreement": "EXECUTED",
+      "revenue_grade_metering_approved": "APPROVED",
+      "balancing_authority_registration": "REGISTERED",
+      "nepa_review_status": "CATEGORICAL_EXCLUSION",
+      "epa_air_permit": "NOT_REQUIRED",
+      "army_corps_404_permit": "NOT_REQUIRED",
+      "endangered_species_clearance": "NOT_REQUIRED",
+      "hazardous_materials_declaration": "SUBMITTED",
+      "building_structural_permit": "OBTAINED",
+      "faa_height_clearance": "NOT_REQUIRED",
+      "sec_reg_ab_compliance": "COMPLIANT",
+      "sec_rule_144a_status": "APPLICABLE",
+      "spv_state_entity_filing": "ACTIVE",
+      "state_securities_exemption": "NOT_REQUIRED",
+      "overall_compliance_status": "FULLY_COMPLIANT",
+      "outstanding_notices": "NONE",
+      "last_regulatory_audit_date": "2025-02-14"
+    }
+  },
+  "beckn_payload": {
+    "qualify_item": {
+      "asset_lium_id": "LIUM-US-BESS-2024-003",
+      "asset_name": "Permian Basin BESS — Ector County Unit 1",
+      "asset_class": "standalone_bess",
+      "balancing_authority": "ERCOT",
+      "state": "TX",
+      "coordinates": { "lat": 31.8457, "lon": -102.3676 },
+      "capacity_mw": 100,
+      "energy_capacity_mwh": 200,
+      "cod_date": "2024-06-01",
+      "offtaker_summary": "15-year Capacity Agreement with Luminant Energy LLC (BBB–/Baa3)",
+      "lq_score": 0.94,
+      "gate_status": "ALL_PASS",
+      "qualification_result": "QUALIFIED",
+      "instrument_routing": "Full Securitisation — Senior AAA(sf) / Mezzanine BBB(sf) / Junior BB(sf)",
+      "pool_discovery_url": "https://api.lium.example/qualify/LIUM-US-BESS-2024-003/pool",
+      "gate_status_callback": "https://api.lium.example/qualify/LIUM-US-BESS-2024-003/gates"
+    }
+  }
+}
+```
+
+</details>
+
 ---
 
 ## 2. Financier
