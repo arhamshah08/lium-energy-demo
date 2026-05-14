@@ -4,8 +4,8 @@ import { ProjectCard } from '@/components/projects/project-card'
 
 export const dynamic = 'force-dynamic'
 
-export default function ProjectsPage() {
-  const projects = listProjects()
+export default async function ProjectsPage() {
+  const projects = await listProjects()
 
   const submitted = projects.filter(p => p.status === 'SUBMITTED').length
   const inProgress = projects.length - submitted

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { getProjectById, updateProject } from '@/lib/db'
 import { getUserFromHeader } from '@/lib/project-helpers'
 import type { ApiResponse, TelemetryTestResult } from '@/types'
 
@@ -16,14 +16,9 @@ export async function POST(
   }
 
   const { id } = await params
-  const { data: project, error: fetchError } = await supabase
-    .from('projects')
-    .select('*')
-    .eq('id', id)
-    .eq('user_id', user.id)
-    .single()
+  const project = await getProjectById(id)
 
-  if (fetchError || !project) {
+  if (!project) {
     return NextResponse.json(
       { ok: false, error: { code: 'NOT_FOUND', message: `Project ${id} not found` } },
       { status: 404 },
@@ -50,14 +45,12 @@ export async function POST(
     },
   }
 
-  await supabase
-    .from('projects')
-    .update({
-      status: 'SUBMITTED',
-      updated_at: new Date().toISOString(),
-      telemetry: { ...project.telemetry, verified: true, verifiedAt: new Date().toISOString() },
-    })
-    .eq('id', id)
+  const parsedTelemetry = JSON.parse(project.telemetry as string)
+  await updateProject(id, {
+    status: 'SUBMITTED',
+    updated_at: new Date().toISOString(),
+    telemetry: { ...parsedTelemetry, verified: true, verifiedAt: new Date().toISOString() },
+  })
 
   return NextResponse.json({ ok: true, data: result })
 }

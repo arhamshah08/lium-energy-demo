@@ -9,7 +9,7 @@ interface Props {
 
 export default async function ProjectDetailsPage({ searchParams }: Props) {
   const { id, submitted } = await searchParams
-  const project = id ? getProject(id) : undefined
+  const project = id ? await getProject(id) : undefined
 
   return (
     <div className="max-w-5xl mx-auto">

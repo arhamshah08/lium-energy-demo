@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { getProjectById, updateProject } from '@/lib/db'
 import { getUserFromHeader, dbToProject } from '@/lib/project-helpers'
-import type { ApiResponse, Project } from '@/types'
+import type { ApiResponse, Project, ProjectStatus } from '@/types'
 
 export async function GET(
   req: NextRequest,
@@ -16,14 +16,49 @@ export async function GET(
   }
 
   const { id } = await params
-  const { data, error } = await supabase.from('projects').select('*').eq('id', id).single()
+  const row = await getProjectById(id)
 
-  if (error || !data) {
+  if (!row) {
     return NextResponse.json(
       { ok: false, error: { code: 'NOT_FOUND', message: `Project ${id} not found` } },
       { status: 404 },
     )
   }
 
-  return NextResponse.json({ ok: true, data: dbToProject(data) })
+  return NextResponse.json({ ok: true, data: dbToProject(row) })
+}
+
+/**
+ * PATCH /api/projects/[id]
+ * Updates project status in the database.
+ * Used by the onboarding submission flow to mark a project as TOKENISED.
+ */
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+): Promise<NextResponse<ApiResponse<Project>>> {
+  const { id } = await params
+  const body: { status?: ProjectStatus } = await req.json()
+
+  const row = await getProjectById(id)
+  if (!row) {
+    return NextResponse.json(
+      { ok: false, error: { code: 'NOT_FOUND', message: `Project ${id} not found` } },
+      { status: 404 },
+    )
+  }
+
+  const updated = await updateProject(id, {
+    status: body.status ?? row.status,
+    updated_at: new Date().toISOString(),
+  })
+
+  if (!updated) {
+    return NextResponse.json(
+      { ok: false, error: { code: 'NOT_FOUND', message: `Project ${id} not found` } },
+      { status: 404 },
+    )
+  }
+
+  return NextResponse.json({ ok: true, data: dbToProject(updated) })
 }

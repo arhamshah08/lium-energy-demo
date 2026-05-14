@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { updateProject } from '@/lib/db'
 import { getUserFromHeader, dbToProject } from '@/lib/project-helpers'
 import type { ApiResponse, Project, UpdateTelemetryBody } from '@/types'
 
@@ -32,20 +32,18 @@ export async function PATCH(
     verified: false,
   }
 
-  const { data, error } = await supabase
-    .from('projects')
-    .update({ status: 'TELEMETRY_PENDING', telemetry, updated_at: new Date().toISOString() })
-    .eq('id', id)
-    .eq('user_id', user.id)
-    .select()
-    .single()
+  const row = await updateProject(
+    id,
+    { status: 'TELEMETRY_PENDING', telemetry, updated_at: new Date().toISOString() },
+    user.id,
+  )
 
-  if (error || !data) {
+  if (!row) {
     return NextResponse.json(
       { ok: false, error: { code: 'NOT_FOUND', message: `Project ${id} not found` } },
       { status: 404 },
     )
   }
 
-  return NextResponse.json({ ok: true, data: dbToProject(data) })
+  return NextResponse.json({ ok: true, data: dbToProject(row) })
 }

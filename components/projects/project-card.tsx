@@ -4,23 +4,29 @@ import { StatusBadge } from '@/components/ui/badge'
 import type { Project, AssetType, ProjectStatus } from '@/types'
 
 const ASSET_META: Record<AssetType, { label: string; icon: string }> = {
-  BESS:        { label: 'Battery Storage',  icon: 'battery_charging_full' },
-  MICROGRID:   { label: 'Microgrid',        icon: 'grid_view' },
-  DER_CLUSTER: { label: 'DER Cluster',      icon: 'hub' },
+  BESS:             { label: 'Battery Storage',  icon: 'battery_charging_full' },
+  MICROGRID:        { label: 'Microgrid',        icon: 'grid_view' },
+  DER_CLUSTER:      { label: 'DER Cluster',      icon: 'hub' },
+  SOLAR_PV:         { label: 'Solar PV',         icon: 'solar_power' },
+  WIND:             { label: 'Wind',             icon: 'air' },
+  SOLAR_BESS_HYBRID:{ label: 'Solar+BESS Hybrid',icon: 'energy_program_saving' },
 }
 
-const STEP_MAP: Record<ProjectStatus, number> = {
+const STEP_MAP: Record<ProjectStatus, number> & Record<string, number> = {
   DRAFT:               1,
   DOCUMENTS_PENDING:   2,
   TELEMETRY_PENDING:   3,
   SUBMITTED:           3,
+  TOKENISED:           3,
 }
 
 const TOTAL_STEPS = 3
 
 export function ProjectCard({ project }: { project: Project }) {
-  const { label: assetLabel, icon: assetIcon } = ASSET_META[project.assetType]
-  const completedSteps = STEP_MAP[project.status]
+  const assetMeta = (ASSET_META as Record<string, typeof ASSET_META[AssetType]>)[project.assetType]
+    ?? { label: project.assetType, icon: 'energy_program_saving' }
+  const { label: assetLabel, icon: assetIcon } = assetMeta
+  const completedSteps = (STEP_MAP as Record<string, number>)[project.status] ?? 0
   const isSubmitted = project.status === 'SUBMITTED'
 
   return (

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { randomUUID } from 'crypto'
-import { supabase } from '@/lib/supabase'
+import { getProjectsByUserId, getProjectsByStatus, insertProject } from '@/lib/db'
 import { getUserFromHeader, dbToProject } from '@/lib/project-helpers'
 import type { CreateProjectBody, Project, ApiResponse } from '@/types'
 
@@ -13,22 +13,11 @@ export async function GET(req: NextRequest): Promise<NextResponse<ApiResponse<Pr
     )
   }
 
-  let query = supabase.from('projects').select('*')
-  if (user.role === 'financier') {
-    query = query.eq('status', 'SUBMITTED')
-  } else {
-    query = query.eq('user_id', user.id)
-  }
+  const rows = user.role === 'financier'
+    ? await getProjectsByStatus('SUBMITTED')
+    : await getProjectsByUserId(user.id)
 
-  const { data, error } = await query.order('created_at', { ascending: false })
-  if (error) {
-    return NextResponse.json(
-      { ok: false, error: { code: 'DB_ERROR', message: error.message } },
-      { status: 500 },
-    )
-  }
-
-  return NextResponse.json({ ok: true, data: (data ?? []).map(dbToProject) })
+  return NextResponse.json({ ok: true, data: rows.map(dbToProject) })
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse<ApiResponse<Project>>> {
@@ -46,29 +35,18 @@ export async function POST(req: NextRequest): Promise<NextResponse<ApiResponse<P
   const assetType = body.assetType || 'BESS'
   const now = new Date().toISOString()
 
-  const { data, error } = await supabase
-    .from('projects')
-    .insert({
-      id: randomUUID(),
-      user_id: user.id,
-      status: 'DRAFT',
-      name,
-      location: body.location?.trim() ?? '',
-      jurisdiction,
-      asset_type: assetType,
-      documents: [],
-      created_at: now,
-      updated_at: now,
-    })
-    .select()
-    .single()
+  const row = await insertProject({
+    id: randomUUID(),
+    user_id: user.id,
+    status: 'DRAFT',
+    name,
+    location: body.location?.trim() ?? '',
+    jurisdiction,
+    asset_type: assetType,
+    documents: [],
+    created_at: now,
+    updated_at: now,
+  })
 
-  if (error) {
-    return NextResponse.json(
-      { ok: false, error: { code: 'DB_ERROR', message: error.message } },
-      { status: 500 },
-    )
-  }
-
-  return NextResponse.json({ ok: true, data: dbToProject(data) }, { status: 201 })
+  return NextResponse.json({ ok: true, data: dbToProject(row) }, { status: 201 })
 }

@@ -11,7 +11,7 @@ export default async function TelemetryPage({ searchParams }: Props) {
   const { id } = await searchParams
   if (!id) redirect('/onboard/project-details')
 
-  const project = getProject(id)
+  const project = await getProject(id)
   if (!project) redirect('/onboard/project-details')
 
   return (
