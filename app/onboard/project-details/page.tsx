@@ -1,7 +1,7 @@
 import { Stepper } from '@/components/onboard/stepper'
 import { ProjectDetailsForm } from '@/components/onboard/project-details-form'
 import { Card, CardBody } from '@/components/ui/card'
-import { getProject } from '@/lib/store'
+import { getProjectById as getProject } from '@/lib/store'
 
 interface Props {
   searchParams: Promise<{ id?: string; submitted?: string }>
@@ -9,7 +9,7 @@ interface Props {
 
 export default async function ProjectDetailsPage({ searchParams }: Props) {
   const { id, submitted } = await searchParams
-  const project = id ? getProject(id) : undefined
+  const project = id ? await getProject(id) : undefined
 
   return (
     <div className="max-w-5xl mx-auto">

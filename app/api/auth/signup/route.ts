@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { randomUUID } from 'crypto'
 import { generateKeyPairSync } from 'crypto'
-import { supabase } from '@/lib/supabase'
+import bcrypt from 'bcryptjs'
+import { insertProfile } from '@/lib/db'
 import jwt from 'jsonwebtoken'
 
 const JWT_SECRET = process.env.JWT_SECRET ?? 'dev-secret-change-in-production'
@@ -8,7 +10,6 @@ const DEDI_API_KEY = process.env.DEDI_API_KEY ?? ''
 const DEDI_NAMESPACE = process.env.DEDI_NAMESPACE ?? ''
 
 const VALID_ROLES = ['developer', 'financier', 'securitisation_agent', 'portfolio_manager', 'investor']
-
 
 function buildRegistryName(companyName: string, fullName: string, role: string): string {
   const base = (companyName || fullName).toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '')
@@ -43,7 +44,6 @@ async function createDediRegistry(companyName: string, fullName: string, role: s
     })
     const json = await res.json()
     console.log('[DeDi] createRegistry response:', res.status, JSON.stringify(json))
-    // 409 means registry already exists — that's fine, still usable
     if (!res.ok && res.status !== 409) return null
     return json.data?.registry_id ?? buildRegistryName(companyName, fullName, role)
   } catch (e) {
@@ -170,10 +170,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid role' }, { status: 400 })
   }
 
-  const { data, error } = await supabase.auth.signUp({ email, password })
-  if (error) return NextResponse.json({ error: error.message }, { status: 400 })
-
-  const userId = data.user!.id
+  const userId = randomUUID()
+  const passwordHash = bcrypt.hashSync(password, 10)
 
   // Step 1 — create registry for all roles
   const registryId = await createDediRegistry(companyName, fullName, role)
@@ -198,9 +196,10 @@ export async function POST(req: NextRequest) {
     participantsRecordId = await createDediParticipantsRecord(userId, companyName, fullName, role)
   }
 
-  const profile: Record<string, unknown> = {
+  await insertProfile({
     id: userId,
     email,
+    password_hash: passwordHash,
     role,
     full_name: fullName,
     company_name: companyName ?? null,
@@ -213,11 +212,7 @@ export async function POST(req: NextRequest) {
     signing_private_key: signingPrivateKey,
     beckn_record_id: becknRecordId,
     participants_record_id: participantsRecordId,
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error: profileError } = await supabase.from('profiles').insert(profile as any)
-  if (profileError) return NextResponse.json({ error: profileError.message }, { status: 400 })
+  })
 
   const token = jwt.sign(
     { id: userId, email, role, fullName },

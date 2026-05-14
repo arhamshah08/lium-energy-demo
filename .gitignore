@@ -30,8 +30,10 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# env files
+.env
+.env.*
+!.env.example
 
 # vercel
 .vercel
@@ -39,4 +41,21 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-.env*.local
+
+# supabase
+supabase/.temp/
+
+# SQLite (local dev only, not used in production)
+data/app.db
+data/app.db-shm
+data/app.db-wal
+
+# IDE
+.idea/
+.vscode/
+
+# MCP config (local)
+.mcp.json
+
+# AI agent config (local)
+CLAUDE.md

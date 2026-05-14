@@ -14,18 +14,27 @@ export function getUserFromHeader(authHeader: string | null): { id: string; role
   }
 }
 
-// Maps Supabase snake_case row → camelCase Project type
-export function dbToProject(row: Record<string, unknown>): Project {
+function parseJson<T>(value: unknown): T | undefined {
+  if (value === undefined || value === null) return undefined
+  if (typeof value === 'string') {
+    try { return JSON.parse(value) as T } catch { return undefined }
+  }
+  return value as T
+}
+
+// Maps DB snake_case row → camelCase Project type
+export function dbToProject(row: Record<string, unknown> | object): Project {
+  const r = row as Record<string, unknown>
   return {
-    id: row.id as string,
-    status: row.status as Project['status'],
-    name: row.name as string,
-    location: (row.location as string) ?? '',
-    jurisdiction: row.jurisdiction as Project['jurisdiction'],
-    assetType: row.asset_type as Project['assetType'],
-    createdAt: row.created_at as string,
-    updatedAt: row.updated_at as string,
-    documents: (row.documents as Project['documents']) ?? [],
-    telemetry: row.telemetry as Project['telemetry'] | undefined,
+    id: r.id as string,
+    status: r.status as Project['status'],
+    name: r.name as string,
+    location: (r.location as string) ?? '',
+    jurisdiction: r.jurisdiction as Project['jurisdiction'],
+    assetType: r.asset_type as Project['assetType'],
+    createdAt: r.created_at as string,
+    updatedAt: r.updated_at as string,
+    documents: parseJson<Project['documents']>(r.documents) ?? [],
+    telemetry: parseJson<Project['telemetry']>(r.telemetry),
   }
 }
