@@ -87,7 +87,7 @@ export function SignupForm({ config }: { config: SignupFormConfig }) {
       <TopNav />
 
       {/* Brand strip */}
-      <div className="bg-primary py-8 px-4">
+      <div className="bg-brand-gradient py-8 px-4">
         <div className="max-w-lg mx-auto">
           <Link href="/signup" className="text-sm text-primary-fixed hover:text-white transition-colors">
             ← Back to roles

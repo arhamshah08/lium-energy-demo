@@ -34,7 +34,7 @@ export default function Home() {
       <TopNav />
 
       {/* ── Hero ── */}
-      <section className="bg-primary">
+      <section className="bg-brand-gradient">
         <div className="max-w-container mx-auto px-margin-desktop py-20 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
           <div>
 
@@ -96,7 +96,7 @@ export default function Home() {
       </section>
 
       {/* ── CTA Banner ── */}
-      <section className="bg-secondary py-16">
+      <section className="bg-gradient-to-r from-secondary to-[#0F766E] py-16">
         <div className="max-w-container mx-auto px-margin-desktop text-center">
           <h2 className="text-headline-md text-white mb-3">Ready to get started?</h2>
           <p className="text-body-base text-secondary-fixed-dim mb-8 max-w-lg mx-auto">

@@ -50,7 +50,7 @@ export default function SignInPage() {
     <div className="min-h-screen flex flex-col bg-surface-container-low">
       <TopNav />
 
-      <div className="bg-primary py-10 px-4 text-center">
+      <div className="bg-brand-gradient py-10 px-4 text-center">
         <p className="text-label-caps text-primary-fixed mb-2">LIUM Energy Network</p>
         <h1 className="text-headline-md text-white">Welcome back</h1>
         <p className="text-caption text-primary-fixed mt-1">Sign in to your account</p>

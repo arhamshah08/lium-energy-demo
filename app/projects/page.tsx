@@ -33,8 +33,31 @@ export default function ProjectsPage() {
 
   if (loading || fetching) {
     return (
-      <div className="py-gutter flex items-center justify-center min-h-[40vh]">
-        <span className="material-symbols-outlined text-primary text-[32px]" style={{ animation: 'spin 1s linear infinite' }}>progress_activity</span>
+      <div className="py-gutter space-y-8">
+        <div className="flex items-start justify-between gap-4">
+          <div className="space-y-2">
+            <div className="h-10 w-56 bg-surface-container-high rounded-lg animate-pulse" />
+            <div className="h-5 w-80 bg-surface-container rounded-lg animate-pulse" />
+          </div>
+          <div className="h-10 w-32 bg-surface-container-high rounded-lg animate-pulse" />
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="bg-surface-container-lowest rounded-xl border border-outline-variant/60 p-5">
+              <div className="h-4 w-24 bg-surface-container-high rounded animate-pulse mb-3" />
+              <div className="h-7 w-16 bg-surface-container-high rounded animate-pulse" />
+            </div>
+          ))}
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="bg-surface-container-lowest rounded-xl border border-outline-variant/60 p-6 space-y-4">
+              <div className="h-5 w-3/4 bg-surface-container-high rounded animate-pulse" />
+              <div className="h-4 w-1/2 bg-surface-container rounded animate-pulse" />
+              <div className="h-20 w-full bg-surface-container rounded-lg animate-pulse" />
+            </div>
+          ))}
+        </div>
       </div>
     )
   }
@@ -79,17 +102,17 @@ export default function ProjectsPage() {
       {/* Stats bar */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Total Assets',  value: projects.length,  icon: 'category' },
-          { label: 'Submitted',     value: submitted,         icon: 'check_circle',    accent: 'text-secondary' },
-          { label: 'In Progress',   value: inProgress,        icon: 'pending_actions', accent: 'text-primary' },
-          { label: 'Jurisdictions', value: new Set(projects.map(p => p.jurisdiction)).size, icon: 'lan' },
-        ].map(({ label, value, icon, accent }) => (
-          <div key={label} className="bg-surface-container-lowest rounded-xl border border-outline-variant/60 p-5 shadow-card">
+          { label: 'Total Assets',  value: projects.length,  icon: 'category',        border: 'border-l-outline-variant', iconColor: 'text-on-surface-variant' },
+          { label: 'Submitted',     value: submitted,         icon: 'check_circle',    border: 'border-l-secondary',       iconColor: 'text-secondary' },
+          { label: 'In Progress',   value: inProgress,        icon: 'pending_actions', border: 'border-l-primary',         iconColor: 'text-primary' },
+          { label: 'Jurisdictions', value: new Set(projects.map(p => p.jurisdiction)).size, icon: 'lan', border: 'border-l-tertiary', iconColor: 'text-tertiary' },
+        ].map(({ label, value, icon, border, iconColor }) => (
+          <div key={label} className={`bg-surface-container-lowest rounded-xl border border-outline-variant/60 border-l-4 ${border} p-5 shadow-card`}>
             <div className="flex items-center gap-2 mb-2">
-              <span className={`material-symbols-outlined text-[18px] ${accent ?? 'text-on-surface-variant'}`}>{icon}</span>
+              <span className={`material-symbols-outlined text-[18px] ${iconColor}`}>{icon}</span>
               <p className="text-label-caps text-on-surface-variant">{label}</p>
             </div>
-            <p className={`text-data-point font-bold ${accent ?? 'text-on-surface'}`}>{value}</p>
+            <p className="text-data-point font-bold text-on-surface">{value}</p>
           </div>
         ))}
       </div>

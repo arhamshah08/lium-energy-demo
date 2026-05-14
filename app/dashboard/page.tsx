@@ -28,17 +28,17 @@ export default async function DashboardPage() {
       {/* KPI row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Total AUM',         value: `$${totalAUM.toLocaleString()}M`, icon: 'payments',        accent: 'text-secondary', href: '/tokenise' },
-          { label: 'Tokens Issued',     value: tokens.length,                    icon: 'token',           accent: '',               href: '/tokenise' },
-          { label: 'Securities Listed', value: listedPools,                      icon: 'storefront',      accent: 'text-primary',   href: '/marketplace' },
-          { label: 'Subscribed',        value: `$${totalSubscribed.toLocaleString()}M`, icon: 'account_balance', accent: 'text-secondary', href: '/marketplace' },
-        ].map(({ label, value, icon, accent, href }) => (
-          <Link key={label} href={href} className="bg-surface-container-lowest rounded-xl border border-outline-variant/60 p-5 shadow-card hover:shadow-card-hover transition-all">
+          { label: 'Total AUM',         value: `$${totalAUM.toLocaleString()}M`, icon: 'payments',        border: 'border-l-secondary', iconColor: 'text-secondary', href: '/tokenise' },
+          { label: 'Tokens Issued',     value: tokens.length,                    icon: 'token',           border: 'border-l-primary',   iconColor: 'text-primary',   href: '/tokenise' },
+          { label: 'Securities Listed', value: listedPools,                      icon: 'storefront',      border: 'border-l-tertiary',  iconColor: 'text-tertiary',  href: '/marketplace' },
+          { label: 'Subscribed',        value: `$${totalSubscribed.toLocaleString()}M`, icon: 'account_balance', border: 'border-l-secondary', iconColor: 'text-secondary', href: '/marketplace' },
+        ].map(({ label, value, icon, border, iconColor, href }) => (
+          <Link key={label} href={href} className={`bg-surface-container-lowest rounded-xl border border-outline-variant/60 border-l-4 ${border} p-5 shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all`}>
             <div className="flex items-center gap-2 mb-2">
-              <span className={`material-symbols-outlined text-[18px] ${accent || 'text-on-surface-variant'}`}>{icon}</span>
+              <span className={`material-symbols-outlined text-[18px] ${iconColor}`}>{icon}</span>
               <p className="text-label-caps text-on-surface-variant">{label}</p>
             </div>
-            <p className={`text-data-point font-bold ${accent || 'text-on-surface'}`}>{value}</p>
+            <p className="text-data-point font-bold text-on-surface">{value}</p>
           </Link>
         ))}
       </div>

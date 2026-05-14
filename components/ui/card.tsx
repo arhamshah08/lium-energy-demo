@@ -5,7 +5,7 @@ export function Card({ className, children, ...props }: HTMLAttributes<HTMLDivEl
   return (
     <div
       className={cn(
-        'bg-surface-container-lowest rounded-xl border border-[#E2E8F0]',
+        'bg-surface-container-lowest rounded-xl border border-outline-variant',
         'shadow-card hover:shadow-card-hover hover:-translate-y-px transition-all duration-200',
         className,
       )}

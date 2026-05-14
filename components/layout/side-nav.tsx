@@ -58,7 +58,7 @@ export function SideNav() {
       <nav className="flex-1 px-3 overflow-y-auto space-y-4 pb-2">
         {sections.map(({ label, items }) => (
           <div key={label}>
-            <p className="text-[10px] font-bold tracking-[0.12em] text-on-surface-variant/50 uppercase px-4 mb-1">
+            <p className="text-[10px] font-semibold tracking-[0.10em] text-on-surface-variant/40 uppercase px-4 mb-1">
               {label}
             </p>
             <div className="space-y-0.5">
@@ -67,10 +67,10 @@ export function SideNav() {
                   key={itemLabel}
                   href={href}
                   className={cn(
-                    'flex items-center gap-3 px-4 py-2.5 rounded-lg text-label-caps transition-all',
+                    'flex items-center gap-3 px-4 py-2.5 rounded-lg text-nav-label transition-all',
                     isActive(href)
-                      ? 'bg-secondary-container text-on-secondary-container translate-x-1'
-                      : 'text-on-surface-variant hover:bg-surface-variant',
+                      ? 'bg-primary/10 text-primary font-semibold translate-x-0.5'
+                      : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface',
                   )}
                 >
                   <span className="material-symbols-outlined text-[20px]">{icon}</span>
@@ -106,7 +106,7 @@ export function SideNav() {
           <Link
             key={label}
             href={href}
-            className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-label-caps text-on-surface-variant hover:bg-surface-variant transition-all"
+            className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-nav-label text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all"
           >
             <span className="material-symbols-outlined text-[20px]">{icon}</span>
             {label}
