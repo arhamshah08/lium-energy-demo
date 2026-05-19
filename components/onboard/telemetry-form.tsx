@@ -45,19 +45,17 @@ export function TelemetryForm({ projectId }: { projectId: string }) {
     setError('')
     const saved = await saveConfig()
     if (!saved) return
-
     setTesting(true)
     const res = await projectsApi.testTelemetry(projectId)
     setTesting(false)
-
     if (!res.ok) { setError(res.error.message); return }
     setTestResult(res.data)
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!testResult?.success) { setError('Test the connection before submitting'); return }
-    router.push(`/projects/${projectId}?new=true`)
+    if (!testResult?.success) { setError('Test the connection before proceeding'); return }
+    router.push(`/onboard/credit-pack?id=${projectId}`)
   }
 
   return (
@@ -213,8 +211,8 @@ export function TelemetryForm({ projectId }: { projectId: string }) {
               disabled={!testResult?.success}
               className="flex-1 md:flex-none gap-2"
             >
-              Submit Project
-              <span className="material-symbols-outlined text-[16px]">chevron_right</span>
+              Next: Credit Pack
+              <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
             </Button>
           </div>
         </div>

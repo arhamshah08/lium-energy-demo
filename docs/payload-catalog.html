@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LIUM — API Payload Catalog</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0f1929;
+      color: #e8eaf0;
+      padding: 40px 24px 80px;
+      min-height: 100vh;
+    }
+    a { color: inherit; text-decoration: none; }
+
+    /* ── Header ── */
+    header { text-align: center; margin-bottom: 56px; }
+    header h1 { font-size: 28px; font-weight: 800; letter-spacing: -0.5px; color: #fff; }
+    header h1 span { color: #4dd0ca; }
+    header p { margin-top: 8px; font-size: 13px; color: #6b7fa0; letter-spacing: 0.06em; text-transform: uppercase; }
+
+    /* ── Status flow bar ── */
+    .status-flow {
+      display: flex; align-items: center; justify-content: center;
+      flex-wrap: wrap; gap: 4px; margin-bottom: 56px;
+    }
+    .status-pill {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+      padding: 4px 10px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.1);
+      color: #8899bb; background: rgba(255,255,255,0.04);
+    }
+    .status-pill.active { color: #4dd0ca; border-color: #4dd0ca40; background: rgba(77,208,202,0.08); }
+    .status-arrow { color: #2a3a5a; font-size: 12px; }
+
+    /* ── Section ── */
+    .section { max-width: 960px; margin: 0 auto 64px; }
+    .section-header {
+      display: flex; align-items: center; gap-12px; margin-bottom: 24px;
+      padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .section-num {
+      width: 28px; height: 28px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 800; flex-shrink: 0;
+    }
+    .section-title { font-size: 13px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; }
+    .section-sub { font-size: 12px; color: #6b7fa0; margin-top: 2px; }
+
+    /* ── Call card ── */
+    .call { background: #111d2e; border: 1px solid #1e3050; border-radius: 14px; margin-bottom: 16px; overflow: hidden; }
+    .call-header {
+      display: flex; align-items: center; flex-wrap: wrap; gap: 10px;
+      padding: 14px 18px; border-bottom: 1px solid #1a2a44; cursor: pointer;
+      user-select: none;
+    }
+    .call-header:hover { background: rgba(255,255,255,0.02); }
+    .actor-badge {
+      font-size: 9px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 3px 8px; border-radius: 5px; flex-shrink: 0;
+    }
+    .method {
+      font-size: 10px; font-weight: 800; letter-spacing: 0.06em;
+      padding: 3px 8px; border-radius: 5px; flex-shrink: 0;
+    }
+    .method.POST   { background: #1a3a22; color: #4ade80; }
+    .method.PATCH  { background: #2a2a1a; color: #facc15; }
+    .method.GET    { background: #1a2a3a; color: #60a5fa; }
+    .endpoint {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 12px; color: #c4d4f0; flex: 1;
+    }
+    .status-change {
+      font-size: 9px; font-weight: 700; letter-spacing: 0.06em;
+      padding: 3px 8px; border-radius: 5px;
+      background: rgba(77,208,202,0.1); color: #4dd0ca; border: 1px solid #4dd0ca30;
+      flex-shrink: 0;
+    }
+    .chevron { color: #3a4a6a; font-size: 14px; margin-left: auto; flex-shrink: 0; transition: transform 0.2s; }
+    .chevron.open { transform: rotate(180deg); }
+
+    /* ── Payload body ── */
+    .call-body { display: none; }
+    .call-body.open { display: block; }
+    .payload-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+    @media (max-width: 640px) { .payload-grid { grid-template-columns: 1fr; } }
+    .payload-panel { padding: 16px 18px; border-right: 1px solid #1a2a44; }
+    .payload-panel:last-child { border-right: none; }
+    .payload-label {
+      font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+      color: #4a5a7a; margin-bottom: 10px;
+    }
+    pre {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 11px; line-height: 1.7;
+      color: #c4d4f0; white-space: pre-wrap; word-break: break-all;
+    }
+    .k  { color: #9dc8f0; }  /* key */
+    .s  { color: #a8d8a8; }  /* string */
+    .n  { color: #f0b870; }  /* number */
+    .b  { color: #d88080; }  /* boolean */
+    .c  { color: #6b7fa0; }  /* comment */
+    .note {
+      font-size: 11px; color: #6b7fa0; line-height: 1.6;
+      padding: 12px 18px; background: rgba(255,255,255,0.02); border-top: 1px solid #1a2a44;
+    }
+    .note strong { color: #8899bb; }
+
+    /* ── Actor colours ── */
+    .dev  { background: #0d2a4a; color: #60a5fa; }
+    .fin  { background: #2a1a0d; color: #fb923c; }
+    .sa   { background: #0d2a1a; color: #34d399; }
+    .pm   { background: #1a0d2a; color: #a78bfa; }
+    .inv  { background: #2a0d1a; color: #f472b6; }
+    .sys  { background: #1a1a1a; color: #94a3b8; }
+
+    .section-num.dev-s  { background: #0d2a4a; color: #60a5fa; }
+    .section-num.fin-s  { background: #2a1a0d; color: #fb923c; }
+    .section-num.sa-s   { background: #0d2a1a; color: #34d399; }
+    .section-num.inv-s  { background: #2a0d1a; color: #f472b6; }
+
+    /* ── TOC ── */
+    .toc {
+      max-width: 960px; margin: 0 auto 48px;
+      background: #111d2e; border: 1px solid #1e3050; border-radius: 14px;
+      padding: 20px 24px;
+    }
+    .toc-title { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #4a5a7a; margin-bottom: 14px; }
+    .toc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+    .toc-item {
+      display: flex; align-items: center; gap: 8px; padding: 8px 10px;
+      border-radius: 8px; font-size: 12px; font-weight: 600; color: #8899bb;
+      border: 1px solid #1a2a44; transition: all 0.15s; cursor: pointer;
+    }
+    .toc-item:hover { border-color: #4dd0ca40; color: #4dd0ca; background: rgba(77,208,202,0.05); }
+    .toc-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>LIUM <span>Energy</span> — API Payload Catalog</h1>
+  <p>Live request/response payloads · All 5 actors · Full lifecycle</p>
+</header>
+
+<!-- Status flow -->
+<div class="status-flow">
+  <span class="status-pill">DRAFT</span>
+  <span class="status-arrow">›</span>
+  <span class="status-pill">SUBMITTED</span>
+  <span class="status-arrow">›</span>
+  <span class="status-pill active">PUBLISHED_FOR_FINANCE</span>
+  <span class="status-arrow">›</span>
+  <span class="status-pill active">OFFER_RECEIVED</span>
+  <span class="status-arrow">›</span>
+  <span class="status-pill active">FINANCING_ACCEPTED</span>
+  <span class="status-arrow">›</span>
+  <span class="status-pill active">PUBLISHED_FOR_SA</span>
+  <span class="status-arrow">›</span>
+  <span class="status-pill">TRANSACTING</span>
+  <span class="status-arrow">›</span>
+  <span class="status-pill">TOKENISED</span>
+</div>
+
+<!-- TOC -->
+<div class="toc">
+  <p class="toc-title">Jump to section</p>
+  <div class="toc-grid">
+    <div class="toc-item" onclick="document.getElementById('s1').scrollIntoView({behavior:'smooth'})"><span class="toc-dot" style="background:#60a5fa"></span>1 · Developer Onboarding</div>
+    <div class="toc-item" onclick="document.getElementById('s2').scrollIntoView({behavior:'smooth'})"><span class="toc-dot" style="background:#60a5fa"></span>2 · Publish for Finance</div>
+    <div class="toc-item" onclick="document.getElementById('s3').scrollIntoView({behavior:'smooth'})"><span class="toc-dot" style="background:#fb923c"></span>3 · Financier Submits Offer</div>
+    <div class="toc-item" onclick="document.getElementById('s4').scrollIntoView({behavior:'smooth'})"><span class="toc-dot" style="background:#60a5fa"></span>4 · Developer — Accept / Reject / Revise</div>
+    <div class="toc-item" onclick="document.getElementById('s5').scrollIntoView({behavior:'smooth'})"><span class="toc-dot" style="background:#fb923c"></span>5 · Financier Resubmits</div>
+    <div class="toc-item" onclick="document.getElementById('s6').scrollIntoView({behavior:'smooth'})"><span class="toc-dot" style="background:#60a5fa"></span>6 · PTO Update + Publish to SA</div>
+    <div class="toc-item" onclick="document.getElementById('s7').scrollIntoView({behavior:'smooth'})"><span class="toc-dot" style="background:#34d399"></span>7 · SA — Issue Token</div>
+    <div class="toc-item" onclick="document.getElementById('s8').scrollIntoView({behavior:'smooth'})"><span class="toc-dot" style="background:#34d399"></span>8 · SA — Create Pool + Tranches</div>
+    <div class="toc-item" onclick="document.getElementById('s9').scrollIntoView({behavior:'smooth'})"><span class="toc-dot" style="background:#f472b6"></span>9 · Investor Subscribes</div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- SECTION 1 — DEVELOPER ONBOARDING                      -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div class="section" id="s1">
+  <div class="section-header">
+    <div class="section-num dev-s">1</div>
+    <div>
+      <div class="section-title" style="color:#60a5fa">Developer Onboarding</div>
+      <div class="section-sub">5-step flow: create project → docs → telemetry → credit pack → submit</div>
+    </div>
+  </div>
+
+  <!-- 1a Create project -->
+  <div class="call">
+    <div class="call-header" onclick="toggle(this)">
+      <span class="actor-badge dev">Developer</span>
+      <span class="method POST">POST</span>
+      <span class="endpoint">/api/projects</span>
+      <span class="status-change">→ DRAFT</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="call-body">
+      <div class="payload-grid">
+        <div class="payload-panel">
+          <div class="payload-label">Request body</div>
+          <pre>{
+  <span class="k">"name"</span>: <span class="s">"Mojave BESS Phase 1"</span>,
+  <span class="k">"location"</span>: <span class="s">"Mojave, CA"</span>,
+  <span class="k">"jurisdiction"</span>: <span class="s">"CAISO"</span>,
+  <span class="k">"assetType"</span>: <span class="s">"BESS"</span>,
+  <span class="k">"financials"</span>: {
+    <span class="k">"capacityMW"</span>: <span class="n">100</span>,
+    <span class="k">"capacityMWh"</span>: <span class="n">400</span>,
+    <span class="k">"codDate"</span>: <span class="s">"2024-09-01"</span>,
+    <span class="k">"assetLifeYears"</span>: <span class="n">20</span>,
+    <span class="k">"ppaCounterparty"</span>: <span class="s">"Pacific Gas &amp; Electric"</span>,
+    <span class="k">"ppaTariffMwh"</span>: <span class="n">78.50</span>,
+    <span class="k">"totalCapexM"</span>: <span class="n">180</span>,
+    <span class="k">"debtPct"</span>: <span class="n">70</span>,
+    <span class="k">"equityPct"</span>: <span class="n">30</span>,
+    <span class="k">"annualRevenueM"</span>: <span class="n">24.5</span>,
+    <span class="k">"annualOpexM"</span>: <span class="n">4.2</span>,
+    <span class="k">"annualDebtServiceM"</span>: <span class="n">14.8</span>,
+    <span class="k">"gapFundingEligible"</span>: <span class="b">true</span>,
+    <span class="k">"gapFundingProgram"</span>: <span class="s">"ITC 30% Federal Tax Credit"</span>
+  }
+}</pre>
+        </div>
+        <div class="payload-panel">
+          <div class="payload-label">Response  201</div>
+          <pre>{
+  <span class="k">"ok"</span>: <span class="b">true</span>,
+  <span class="k">"data"</span>: {
+    <span class="k">"id"</span>: <span class="s">"proj_abc123"</span>,
+    <span class="k">"status"</span>: <span class="s">"DRAFT"</span>,
+    <span class="k">"name"</span>: <span class="s">"Mojave BESS Phase 1"</span>,
+    <span class="k">"jurisdiction"</span>: <span class="s">"CAISO"</span>,
+    <span class="k">"assetType"</span>: <span class="s">"BESS"</span>,
+    <span class="k">"ptoStatus"</span>: <span class="s">"PRE_PROCESSING"</span>,
+    <span class="k">"financials"</span>: { <span class="c">/* mirrors input */</span> },
+    <span class="k">"documents"</span>: [],
+    <span class="k">"telemetry"</span>: <span class="b">null</span>,
+    <span class="k">"createdAt"</span>: <span class="s">"2026-05-19T10:00:00Z"</span>,
+    <span class="k">"updatedAt"</span>: <span class="s">"2026-05-19T10:00:00Z"</span>
+  }
+}</pre>
+        </div>
+      </div>
+      <div class="note"><strong>Auth:</strong> Bearer JWT required · Role: developer · <strong>DSCR auto-computed:</strong> (24.5 − 4.2) / 14.8 = <strong>1.37×</strong></div>
+    </div>
+  </div>
+
+  <!-- 1b Upload documents -->
+  <div class="call">
+    <div class="call-header" onclick="toggle(this)">
+      <span class="actor-badge dev">Developer</span>
+      <span class="method PATCH">PATCH</span>
+      <span class="endpoint">/api/projects/{id}/documents</span>
+      <span class="status-change">→ DOCUMENTS_PENDING</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="call-body">
+      <div class="payload-grid">
+        <div class="payload-panel">
+          <div class="payload-label">Request body</div>
+          <pre>{
+  <span class="k">"documents"</span>: [
+    {
+      <span class="k">"type"</span>: <span class="s">"TECHNICAL_AUDIT"</span>,
+      <span class="k">"filename"</span>: <span class="s">"mojave-audit-2024.pdf"</span>,
+      <span class="k">"parsed"</span>: {
+        <span class="k">"capacity"</span>: <span class="s">"100MW / 400MWh"</span>,
+        <span class="k">"manufacturer"</span>: <span class="s">"CATL"</span>,
+        <span class="k">"warranty"</span>: <span class="s">"10 years"</span>
+      }
+    },
+    {
+      <span class="k">"type"</span>: <span class="s">"PPA_AGREEMENT"</span>,
+      <span class="k">"filename"</span>: <span class="s">"pge-ppa-2024.pdf"</span>
+    },
+    {
+      <span class="k">"type"</span>: <span class="s">"LEGAL_TITLE"</span>,
+      <span class="k">"filename"</span>: <span class="s">"mojave-title-deed.pdf"</span>
+    },
+    {
+      <span class="k">"type"</span>: <span class="s">"INSURANCE_CERTIFICATE"</span>,
+      <span class="k">"filename"</span>: <span class="s">"aig-coverage-2024.pdf"</span>
+    },
+    {
+      <span class="k">"type"</span>: <span class="s">"INTERCONNECTION_STUDY"</span>,
+      <span class="k">"filename"</span>: <span class="s">"caiso-grid-study.pdf"</span>
+    },
+    {
+      <span class="k">"type"</span>: <span class="s">"BESPA_AGREEMENT"</span>,
+      <span class="k">"filename"</span>: <span class="s">"bespa-signed.pdf"</span>
+    }
+  ]
+}</pre>
+        </div>
+        <div class="payload-panel">
+          <div class="payload-label">Response  200</div>
+          <pre>{
+  <span class="k">"ok"</span>: <span class="b">true</span>,
+  <span class="k">"data"</span>: {
+    <span class="k">"id"</span>: <span class="s">"proj_abc123"</span>,
+    <span class="k">"status"</span>: <span class="s">"DOCUMENTS_PENDING"</span>,
+    <span class="k">"documents"</span>: [
+      {
+        <span class="k">"type"</span>: <span class="s">"TECHNICAL_AUDIT"</span>,
+        <span class="k">"filename"</span>: <span class="s">"mojave-audit-2024.pdf"</span>,
+        <span class="k">"uploadedAt"</span>: <span class="s">"2026-05-19T10:05:00Z"</span>
+      },
+      <span class="c">/* … 5 more docs */</span>
+    ]
+  }
+}</pre>
+        </div>
+      </div>
+      <div class="note">Accepted document types: <strong>TECHNICAL_AUDIT · PPA_AGREEMENT · INTERCONNECTION_STUDY · INSURANCE_CERTIFICATE · BESPA_AGREEMENT · LEGAL_TITLE</strong></div>
+    </div>
+  </div>
+
+  <!-- 1c Telemetry -->
+  <div class="call">
+    <div class="call-header" onclick="toggle(this)">
+      <span class="actor-badge dev">Developer</span>
+      <span class="method PATCH">PATCH</span>
+      <span class="endpoint">/api/projects/{id}/telemetry</span>
+      <span class="status-change">→ TELEMETRY_PENDING</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="call-body">
+      <div class="payload-grid">
+        <div class="payload-panel">
+          <div class="payload-label">Request body</div>
+          <pre>{
+  <span class="k">"connectionMethod"</span>: <span class="s">"IEEE_2030_5"</span>,
+  <span class="k">"apiEndpoint"</span>: <span class="s">"https://der.mojave-energy.com/kwh"</span>,
+  <span class="k">"assetIdMapping"</span>: <span class="s">"BESS-MOJAVE-001"</span>,
+  <span class="k">"secretKey"</span>: <span class="s">"sk_live_••••••••"</span>
+}
+
+<span class="c">// connectionMethod options:
+// DIRECT_API | IOT_GATEWAY | DATA_BRIDGE | IEEE_2030_5</span></pre>
+        </div>
+        <div class="payload-panel">
+          <div class="payload-label">Response  200</div>
+          <pre>{
+  <span class="k">"ok"</span>: <span class="b">true</span>,
+  <span class="k">"data"</span>: {
+    <span class="k">"status"</span>: <span class="s">"TELEMETRY_PENDING"</span>,
+    <span class="k">"telemetry"</span>: {
+      <span class="k">"connectionMethod"</span>: <span class="s">"IEEE_2030_5"</span>,
+      <span class="k">"apiEndpoint"</span>: <span class="s">"https://der.mojave-energy.com/kwh"</span>,
+      <span class="k">"assetIdMapping"</span>: <span class="s">"BESS-MOJAVE-001"</span>,
+      <span class="k">"verified"</span>: <span class="b">false</span>
+    }
+  }
+}</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 1d Test telemetry -->
+  <div class="call">
+    <div class="call-header" onclick="toggle(this)">
+      <span class="actor-badge dev">Developer</span>
+      <span class="method POST">POST</span>
+      <span class="endpoint">/api/projects/{id}/telemetry/test</span>
+      <span class="status-change">→ SUBMITTED</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="call-body">
+      <div class="payload-grid">
+        <div class="payload-panel">
+          <div class="payload-label">Request body</div>
+          <pre><span class="c">// No body required — runs live test
+// against the configured endpoint</span></pre>
+        </div>
+        <div class="payload-panel">
+          <div class="payload-label">Response  200</div>
+          <pre>{
+  <span class="k">"ok"</span>: <span class="b">true</span>,
+  <span class="k">"data"</span>: {
+    <span class="k">"success"</span>: <span class="b">true</span>,
+    <span class="k">"latencyMs"</span>: <span class="n">48</span>,
+    <span class="k">"metrics"</span>: {
+      <span class="k">"stateOfCharge"</span>: <span class="n">0.82</span>,
+      <span class="k">"netExportMW"</span>: <span class="n">67.4</span>,
+      <span class="k">"voltageLagMs"</span>: <span class="n">8</span>,
+      <span class="k">"heatIndexC"</span>: <span class="n">32.1</span>
+    }
+  }
+}
+<span class="c">// Project status → SUBMITTED
+// telemetry.verified = true
+// telemetry.verifiedAt = now</span></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 1e Credit pack / risk profile -->
+  <div class="call">
+    <div class="call-header" onclick="toggle(this)">
+      <span class="actor-badge dev">Developer</span>
+      <span class="method PATCH">PATCH</span>
+      <span class="endpoint">/api/projects/{id}</span>
+      <span class="status-change">saves riskProfile</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="call-body">
+      <div class="payload-grid">
+        <div class="payload-panel">
+          <div class="payload-label">Request body — Credit Pack (Step 4)</div>
+          <pre>{
+  <span class="k">"telemetry"</span>: {
+    <span class="k">"riskProfile"</span>: {
+      <span class="k">"availability"</span>: <span class="n">0.96</span>,  <span class="c">// A(t) 0–1</span>
+      <span class="k">"dscrScore"</span>: <span class="n">0.88</span>,     <span class="c">// D(t) 0–1</span>
+      <span class="k">"verification"</span>: <span class="n">0.91</span>,  <span class="c">// V(t) 0–1</span>
+      <span class="k">"penalty"</span>: <span class="n">0.05</span>,       <span class="c">// δ — downward adj.</span>
+      <span class="k">"lqComposite"</span>: <span class="n">0.8664</span>, <span class="c">// computed on client</span>
+      <span class="k">"gate"</span>: <span class="s">"PASS"</span>,          <span class="c">// ≥0.80 PASS</span>
+      <span class="k">"assessedAt"</span>: <span class="s">"2026-05-19T10:15:00Z"</span>
+    }
+  }
+}
+
+<span class="c">// Formula: LQ = [A×0.40 + D×0.35 + V×0.25] × (1−δ)
+// Gate:  PASS ≥ 0.80 | REVIEW ≥ 0.60 | FAIL &lt; 0.60
+// Stored inside telemetry JSONB — no migration needed</span></pre>
+        </div>
+        <div class="payload-panel">
+          <div class="payload-label">Response  200</div>
+          <pre>{
+  <span class="k">"ok"</span>: <span class="b">true</span>,
+  <span class="k">"data"</span>: {
+    <span class="k">"id"</span>: <span class="s">"proj_abc123"</span>,
+    <span class="k">"status"</span>: <span class="s">"SUBMITTED"</span>,
+    <span class="k">"telemetry"</span>: {
+      <span class="k">"connectionMethod"</span>: <span class="s">"IEEE_2030_5"</span>,
+      <span class="k">"verified"</span>: <span class="b">true</span>,
+      <span class="k">"riskProfile"</span>: {
+        <span class="k">"lqComposite"</span>: <span class="n">0.8664</span>,
+        <span class="k">"gate"</span>: <span class="s">"PASS"</span>,
+        <span class="c">/* … full profile */</span>
+      }
+    }
+  }
+}
+<span class="c">// PATCH merges into existing telemetry JSONB
+// Safe to send partial updates</span></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- SECTION 2 — PUBLISH FOR FINANCE                       -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div class="section" id="s2">
+  <div class="section-header">
+    <div class="section-num dev-s">2</div>
+    <div>
+      <div class="section-title" style="color:#60a5fa">Developer — Publish for Finance</div>
+      <div class="section-sub">Makes project visible to all financiers on the discovery feed</div>
+    </div>
+  </div>
+
+  <div class="call">
+    <div class="call-header" onclick="toggle(this)">
+      <span class="actor-badge dev">Developer</span>
+      <span class="method POST">POST</span>
+      <span class="endpoint">/api/projects/{id}/publish</span>
+      <span class="status-change">→ PUBLISHED_FOR_FINANCE</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="call-body">
+      <div class="payload-grid">
+        <div class="payload-panel">
+          <div class="payload-label">Request body</div>
+          <pre>{
+  <span class="k">"target"</span>: <span class="s">"finance"</span>
+}
+
+<span class="c">// target options: "finance" | "sa"
+// "sa" requires status=FINANCING_ACCEPTED
+//       AND ptoStatus=APPROVED</span></pre>
+        </div>
+        <div class="payload-panel">
+          <div class="payload-label">Response  200</div>
+          <pre>{
+  <span class="k">"ok"</span>: <span class="b">true</span>,
+  <span class="k">"data"</span>: {
+    <span class="k">"id"</span>: <span class="s">"proj_abc123"</span>,
+    <span class="k">"status"</span>: <span class="s">"PUBLISHED_FOR_FINANCE"</span>,
+    <span class="k">"ptoStatus"</span>: <span class="s">"PRE_PROCESSING"</span>,
+    <span class="c">/* full Project object */</span>
+  }
+}
+<span class="c">// Project now visible on /projects
+// for all financiers (auto-polls every 5s)</span></pre>
+        </div>
+      </div>
+      <div class="note"><strong>Guard:</strong> If project is not yet SUBMITTED, the endpoint auto-verifies telemetry so developers can publish in a single click during demos.</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- SECTION 3 — FINANCIER SUBMITS OFFER                   -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div class="section" id="s3">
+  <div class="section-header">
+    <div class="section-num fin-s">3</div>
+    <div>
+      <div class="section-title" style="color:#fb923c">Financier — Submit Loan Offer</div>
+      <div class="section-sub">Multiple financiers can submit offers simultaneously; developer sees all</div>
+    </div>
+  </div>
+
+  <div class="call">
+    <div class="call-header" onclick="toggle(this)">
+      <span class="actor-badge fin">Financier</span>
+      <span class="method POST">POST</span>
+      <span class="endpoint">/api/projects/{id}/offers</span>
+      <span class="status-change">→ OFFER_RECEIVED</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="call-body">
+      <div class="payload-grid">
+        <div class="payload-panel">
+          <div class="payload-label">Request body</div>
+          <pre>{
+  <span class="k">"loanAmountM"</span>: <span class="n">126</span>,           <span class="c">// USD millions</span>
+  <span class="k">"rateType"</span>: <span class="s">"FLOATING"</span>,       <span class="c">// FIXED | FLOATING</span>
+  <span class="k">"sofrSpreadPct"</span>: <span class="n">2.75</span>,        <span class="c">// used if FLOATING</span>
+  <span class="k">"tenorYears"</span>: <span class="n">18</span>,
+  <span class="k">"dscrCovenant"</span>: <span class="n">1.25</span>,         <span class="c">// minimum DSCR required</span>
+  <span class="k">"securityRequirements"</span>: <span class="s">"First lien on asset, revenue assignment, DSRA 6 months"</span>,
+  <span class="k">"conditionsPrecedent"</span>: <span class="s">"PTO confirmation, all permits current, insurance in place"</span>,
+  <span class="k">"expiresAt"</span>: <span class="s">"2026-06-15T23:59:59Z"</span>
+}
+
+<span class="c">// Fixed rate alternative:
+// "rateType": "FIXED", "ratePct": 7.5</span></pre>
+        </div>
+        <div class="payload-panel">
+          <div class="payload-label">Response  201</div>
+          <pre>{
+  <span class="k">"ok"</span>: <span class="b">true</span>,
+  <span class="k">"data"</span>: {
+    <span class="k">"id"</span>: <span class="s">"offer_xyz789"</span>,
+    <span class="k">"projectId"</span>: <span class="s">"proj_abc123"</span>,
+    <span class="k">"financierId"</span>: <span class="s">"usr_fin001"</span>,
+    <span class="k">"loanAmountM"</span>: <span class="n">126</span>,
+    <span class="k">"rateType"</span>: <span class="s">"FLOATING"</span>,
+    <span class="k">"sofrSpreadPct"</span>: <span class="n">2.75</span>,
+    <span class="k">"tenorYears"</span>: <span class="n">18</span>,
+    <span class="k">"dscrCovenant"</span>: <span class="n">1.25</span>,
+    <span class="k">"status"</span>: <span class="s">"PENDING"</span>,
+    <span class="k">"expiresAt"</span>: <span class="s">"2026-06-15T23:59:59Z"</span>,
+    <span class="k">"createdAt"</span>: <span class="s">"2026-05-19T11:00:00Z"</span>
+  }
+}
+<span class="c">// Project status → OFFER_RECEIVED
+// Developer sees offer immediately in inbox</span></pre>
+        </div>
+      </div>
+      <div class="note"><strong>Guard:</strong> Only allowed when project status is <code>PUBLISHED_FOR_FINANCE</code> or <code>OFFER_RECEIVED</code>. Multiple concurrent offers from different financiers are accepted simultaneously. Expired offers are auto-rejected on next GET.</div>
+    </div>
+  </div>
+
+  <!-- GET my offers -->
+  <div class="call">
+    <div class="call-header" onclick="toggle(this)">
+      <span class="actor-badge fin">Financier</span>
+      <span class="method GET">GET</span>
+      <span class="endpoint">/api/offers</span>
+      <span class="status-change">My Offers page</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="call-body">
+      <div class="payload-grid">
+        <div class="payload-panel">
+          <div class="payload-label">Request</div>
+          <pre><span class="c">// No body — returns all offers
+// submitted by the authenticated financier
+// Enriched with projectName + projectLocation</span></pre>
+        </div>
+        <div class="payload-panel">
+          <div class="payload-label">Response  200</div>
+          <pre>{
+  <span class="k">"ok"</span>: <span class="b">true</span>,
+  <span class="k">"data"</span>: [
+    {
+      <span class="k">"id"</span>: <span class="s">"offer_xyz789"</span>,
+      <span class="k">"projectId"</span>: <span class="s">"proj_abc123"</span>,
+      <span class="k">"projectName"</span>: <span class="s">"Mojave BESS Phase 1"</span>,
+      <span class="k">"projectLocation"</span>: <span class="s">"Mojave, CA"</span>,
+      <span class="k">"status"</span>: <span class="s">"PENDING"</span>,
+      <span class="k">"loanAmountM"</span>: <span class="n">126</span>,
+      <span class="k">"expiresAt"</span>: <span class="s">"2026-06-15T23:59:59Z"</span>
+      <span class="c">/* … full offer fields */</span>
+    }
+  ]
+}</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- SECTION 4 — DEVELOPER ACTIONS ON OFFER                -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div class="section" id="s4">
+  <div class="section-header">
+    <div class="section-num dev-s">4</div>
+    <div>
+      <div class="section-title" style="color:#60a5fa">Developer — Accept / Reject / Request Revision</div>
+      <div class="section-sub">All actions via PATCH on the individual offer</div>
+    </div>
+  </div>
+
+  <div class="call">
+    <div class="call-header" onclick="toggle(this)">
+      <span class="actor-badge dev">Developer</span>
+      <span class="method PATCH">PATCH</span>
+      <span class="endpoint">/api/projects/{id}/offers/{offerId}</span>
+      <span class="status-change">→ FINANCING_ACCEPTED</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="call-body">
+      <div class="payload-grid">
+        <div class="payload-panel">
+          <div class="payload-label">Accept offer</div>
+          <pre>{
+  <span class="k">"action"</span>: <span class="s">"accept"</span>
+}
+
+<span class="c">// Effects:
+// • This offer → ACCEPTED
+// • All other PENDING/REVISION_REQUESTED
+//   offers → REJECTED (auto)
+// • Project status → FINANCING_ACCEPTED</span></pre>
+        </div>
+        <div class="payload-panel">
+          <div class="payload-label">Reject offer</div>
+          <pre>{
+  <span class="k">"action"</span>: <span class="s">"reject"</span>
+}
+
+<span class="c">// Only this offer → REJECTED
+// Other offers remain open
+// Project stays at OFFER_RECEIVED</span></pre>
+        </div>
+      </div>
+      <div class="payload-grid" style="border-top:1px solid #1a2a44">
+        <div class="payload-panel">
+          <div class="payload-label">Request revision</div>
+          <pre>{
+  <span class="k">"action"</span>: <span class="s">"request_revision"</span>,
+  <span class="k">"revisionNotes"</span>: <span class="s">"Please reduce spread to 2.25% and extend tenor to 20 years"</span>
+}
+
+<span class="c">// This offer → REVISION_REQUESTED
+// Financier sees the note in My Offers
+// Project stays at OFFER_RECEIVED</span></pre>
+        </div>
+        <div class="payload-panel">
+          <div class="payload-label">Response for all actions  200</div>
+          <pre>{
+  <span class="k">"ok"</span>: <span class="b">true</span>,
+  <span class="k">"data"</span>: {
+    <span class="k">"id"</span>: <span class="s">"offer_xyz789"</span>,
+    <span class="k">"status"</span>: <span class="s">"ACCEPTED"</span>,  <span class="c">// or REJECTED / REVISION_REQUESTED</span>
+    <span class="k">"revisionNotes"</span>: <span class="b">null</span>,  <span class="c">// populated if revision</span>
+    <span class="k">"updatedAt"</span>: <span class="s">"2026-05-19T12:00:00Z"</span>
+  }
+}</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- SECTION 5 — FINANCIER RESUBMITS                       -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div class="section" id="s5">
+  <div class="section-header">
+    <div class="section-num fin-s">5</div>
+    <div>
+      <div class="section-title" style="color:#fb923c">Financier — Resubmit Revised Offer</div>
+      <div class="section-sub">Triggered after developer requests revision — pre-fills previous terms</div>
+    </div>
+  </div>
+
+  <div class="call">
+    <div class="call-header" onclick="toggle(this)">
+      <span class="actor-badge fin">Financier</span>
+      <span class="method PATCH">PATCH</span>
+      <span class="endpoint">/api/projects/{id}/offers/{offerId}</span>
+      <span class="status-change">→ PENDING again</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="call-body">
+      <div class="payload-grid">
+        <div class="payload-panel">
+          <div class="payload-label">Request body</div>
+          <pre>{
+  <span class="k">"action"</span>: <span class="s">"resubmit"</span>,
+  <span class="k">"updatedTerms"</span>: {
+    <span class="k">"sofrSpreadPct"</span>: <span class="n">2.25</span>,    <span class="c">// revised down</span>
+    <span class="k">"tenorYears"</span>: <span class="n">20</span>,          <span class="c">// extended</span>
+    <span class="k">"expiresAt"</span>: <span class="s">"2026-06-30T23:59:59Z"</span>
+  }
+}
+
+<span class="c">// Only the financier who submitted the offer
+// can resubmit it. Any subset of terms can
+// be updated — unspecified fields retain
+// their previous values.</span></pre>
+        </div>
+        <div class="payload-panel">
+          <div class="payload-label">Response  200</div>
+          <pre>{
+  <span class="k">"ok"</span>: <span class="b">true</span>,
+  <span class="k">"data"</span>: {
+    <span class="k">"id"</span>: <span class="s">"offer_xyz789"</span>,
+    <span class="k">"status"</span>: <span class="s">"PENDING"</span>,
+    <span class="k">"sofrSpreadPct"</span>: <span class="n">2.25</span>,
+    <span class="k">"tenorYears"</span>: <span class="n">20</span>,
+    <span class="k">"revisionNotes"</span>: <span class="b">null</span>,  <span class="c">// cleared on resubmit</span>
+    <span class="k">"expiresAt"</span>: <span class="s">"2026-06-30T23:59:59Z"</span>
+  }
+}</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- SECTION 6 — PTO UPDATE + PUBLISH TO SA                -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div class="section" id="s6">
+  <div class="section-header">
+    <div class="section-num dev-s">6</div>
+    <div>
+      <div class="section-title" style="color:#60a5fa">Developer — PTO Update &amp; Publish to SA</div>
+      <div class="section-sub">Both conditions required before SA publish: FINANCING_ACCEPTED + ptoStatus=APPROVED</div>
+    </div>
+  </div>
+
+  <div class="call">
+    <div class="call-header" onclick="toggle(this)">
+      <span class="actor-badge dev">Developer</span>
+      <span class="method PATCH">PATCH</span>
+      <span class="endpoint">/api/projects/{id}/pto</span>
+      <span class="status-change">ptoStatus updated</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="call-body">
+      <div class="payload-grid">
+        <div class="payload-panel">
+          <div class="payload-label">Request body</div>
+          <pre>{
+  <span class="k">"ptoStatus"</span>: <span class="s">"APPROVED"</span>
+}
+
+<span class="c">// PTO status options (independent of project status):
+// PRE_PROCESSING → PROCESSING → APPROVED | REJECTED
+// Developer updates this manually as regulatory
+// process progresses in parallel with financing.</span></pre>
+        </div>
+        <div class="payload-panel">
+          <div class="payload-label">Response  200</div>
+          <pre>{
+  <span class="k">"ok"</span>: <span class="b">true</span>,
+  <span class="k">"data"</span>: {
+    <span class="k">"id"</span>: <span class="s">"proj_abc123"</span>,
+    <span class="k">"status"</span>: <span class="s">"FINANCING_ACCEPTED"</span>,
+    <span class="k">"ptoStatus"</span>: <span class="s">"APPROVED"</span>
+    <span class="c">/* UI now shows "Publish to SA" as active */</span>
+  }
+}</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="call">
+    <div class="call-header" onclick="toggle(this)">
+      <span class="actor-badge dev">Developer</span>
+      <span class="method POST">POST</span>
+      <span class="endpoint">/api/projects/{id}/publish</span>
+      <span class="status-change">→ PUBLISHED_FOR_SA</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="call-body">
+      <div class="payload-grid">
+        <div class="payload-panel">
+          <div class="payload-label">Request body</div>
+          <pre>{
+  <span class="k">"target"</span>: <span class="s">"sa"</span>
+}
+
+<span class="c">// Guard: returns 422 if either:
+// • status ≠ FINANCING_ACCEPTED
+// • ptoStatus ≠ APPROVED</span></pre>
+        </div>
+        <div class="payload-panel">
+          <div class="payload-label">Response  200</div>
+          <pre>{
+  <span class="k">"ok"</span>: <span class="b">true</span>,
+  <span class="k">"data"</span>: {
+    <span class="k">"status"</span>: <span class="s">"PUBLISHED_FOR_SA"</span>,
+    <span class="k">"ptoStatus"</span>: <span class="s">"APPROVED"</span>
+    <span class="c">/* Project now in SA tokenise queue */</span>
+  }
+}</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- SECTION 7 — SA ISSUES TOKEN                           -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div class="section" id="s7">
+  <div class="section-header">
+    <div class="section-num sa-s">7</div>
+    <div>
+      <div class="section-title" style="color:#34d399">Securitisation Agent — Issue UNITS Token</div>
+      <div class="section-sub">Only PUBLISHED_FOR_SA projects appear in the SA tokenise queue</div>
+    </div>
+  </div>
+
+  <div class="call">
+    <div class="call-header" onclick="toggle(this)">
+      <span class="actor-badge sa">Sec. Agent</span>
+      <span class="method POST">POST</span>
+      <span class="endpoint">/api/tokens</span>
+      <span class="status-change">→ TRANSACTING + Token ACTIVE</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="call-body">
+      <div class="payload-grid">
+        <div class="payload-panel">
+          <div class="payload-label">Request body</div>
+          <pre>{
+  <span class="k">"projectId"</span>: <span class="s">"proj_abc123"</span>,
+  <span class="k">"nominalValueINR"</span>: <span class="n">126</span>,    <span class="c">// USD M</span>
+  <span class="k">"issuedTo"</span>: <span class="s">"Blackrock Infrastructure SPV"</span>,
+  <span class="k">"totalCapexINR"</span>: <span class="n">180</span>,
+  <span class="k">"debtINR"</span>: <span class="n">126</span>,
+  <span class="k">"equityINR"</span>: <span class="n">54</span>,
+  <span class="k">"annualRevenueINR"</span>: <span class="n">24.5</span>,
+  <span class="k">"annualOpexINR"</span>: <span class="n">4.2</span>,
+  <span class="k">"annualDebtServiceINR"</span>: <span class="n">14.8</span>,
+  <span class="k">"dscrProjection"</span>: [
+    { <span class="k">"year"</span>: <span class="n">1</span>, <span class="k">"revenue"</span>: <span class="n">24.5</span>, <span class="k">"opex"</span>: <span class="n">4.2</span>, <span class="k">"debtService"</span>: <span class="n">14.8</span>, <span class="k">"dscr"</span>: <span class="n">1.37</span> },
+    { <span class="k">"year"</span>: <span class="n">2</span>, <span class="k">"revenue"</span>: <span class="n">25.1</span>, <span class="k">"opex"</span>: <span class="n">4.3</span>, <span class="k">"debtService"</span>: <span class="n">14.8</span>, <span class="k">"dscr"</span>: <span class="n">1.40</span> },
+    <span class="c">/* Y3 … Y20 */</span>
+  ]
+}</pre>
+        </div>
+        <div class="payload-panel">
+          <div class="payload-label">Response  201</div>
+          <pre>{
+  <span class="k">"ok"</span>: <span class="b">true</span>,
+  <span class="k">"data"</span>: {
+    <span class="k">"id"</span>: <span class="s">"tok_def456"</span>,
+    <span class="k">"tokenId"</span>: <span class="s">"UNITS-US-CAISO-2026-001"</span>,
+    <span class="k">"projectId"</span>: <span class="s">"proj_abc123"</span>,
+    <span class="k">"status"</span>: <span class="s">"ACTIVE"</span>,
+    <span class="k">"nominalValueINR"</span>: <span class="n">126</span>,
+    <span class="k">"currency"</span>: <span class="s">"USD"</span>,
+    <span class="k">"issuedTo"</span>: <span class="s">"Blackrock Infrastructure SPV"</span>,
+    <span class="k">"issuedAt"</span>: <span class="s">"2026-05-19T13:00:00Z"</span>,
+    <span class="k">"lqScore"</span>: {
+      <span class="k">"composite"</span>: <span class="n">0.8664</span>,
+      <span class="k">"gate"</span>: <span class="s">"PASS"</span>
+    },
+    <span class="k">"operations"</span>: [
+      { <span class="k">"operation"</span>: <span class="s">"ISSUE"</span>, <span class="k">"status"</span>: <span class="s">"CONFIRMED"</span> }
+    ]
+  }
+}</pre>
+        </div>
+      </div>
+      <div class="note"><strong>Token operations available after issuance:</strong> POST <code>/api/tokens/{id}/operations</code> with body <code>{"operation": "LOCK"|"PLEDGE"|"TRANSFER"|"REDEEM"|"BURN"|"SPLIT"|"MERGE"}</code></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- SECTION 8 — SA CREATES POOL + TRANCHES                -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div class="section" id="s8">
+  <div class="section-header">
+    <div class="section-num sa-s">8</div>
+    <div>
+      <div class="section-title" style="color:#34d399">Securitisation Agent — Create Pool &amp; Structure Tranches</div>
+      <div class="section-sub">One token per pool for now; PM can merge pools later</div>
+    </div>
+  </div>
+
+  <div class="call">
+    <div class="call-header" onclick="toggle(this)">
+      <span class="actor-badge sa">Sec. Agent</span>
+      <span class="method POST">POST</span>
+      <span class="endpoint">/api/pools</span>
+      <span class="status-change">Pool STRUCTURING → LISTED</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="call-body">
+      <div class="payload-grid">
+        <div class="payload-panel">
+          <div class="payload-label">Request body</div>
+          <pre>{
+  <span class="k">"name"</span>: <span class="s">"LIUM CAISO Storage Pool I"</span>,
+  <span class="k">"tokenIds"</span>: [ <span class="s">"tok_def456"</span> ],
+  <span class="k">"tranches"</span>: [
+    {
+      <span class="k">"class"</span>: <span class="s">"SENIOR"</span>,
+      <span class="k">"rating"</span>: <span class="s">"AAA"</span>,
+      <span class="k">"sizeINR"</span>: <span class="n">88.2</span>,         <span class="c">// 70% of $126M</span>
+      <span class="k">"coupon"</span>: <span class="n">8.5</span>,            <span class="c">// % p.a.</span>
+      <span class="k">"tenorYears"</span>: <span class="n">18</span>
+    },
+    {
+      <span class="k">"class"</span>: <span class="s">"MEZZANINE"</span>,
+      <span class="k">"rating"</span>: <span class="s">"BBB"</span>,
+      <span class="k">"sizeINR"</span>: <span class="n">25.2</span>,         <span class="c">// 20%</span>
+      <span class="k">"coupon"</span>: <span class="n">11.0</span>,
+      <span class="k">"tenorYears"</span>: <span class="n">15</span>
+    },
+    {
+      <span class="k">"class"</span>: <span class="s">"JUNIOR"</span>,
+      <span class="k">"rating"</span>: <span class="s">"BB"</span>,
+      <span class="k">"sizeINR"</span>: <span class="n">12.6</span>,         <span class="c">// 10%</span>
+      <span class="k">"coupon"</span>: <span class="n">14.0</span>,
+      <span class="k">"tenorYears"</span>: <span class="n">12</span>
+    }
+  ]
+}
+
+<span class="c">// Tranche class options: SENIOR | MEZZANINE | JUNIOR | EQUITY
+// Rating options: AAA | AA+ | AA | A+ | A | BBB | BB | B | NR</span></pre>
+        </div>
+        <div class="payload-panel">
+          <div class="payload-label">Response  201</div>
+          <pre>{
+  <span class="k">"ok"</span>: <span class="b">true</span>,
+  <span class="k">"data"</span>: {
+    <span class="k">"id"</span>: <span class="s">"pool_ghi012"</span>,
+    <span class="k">"name"</span>: <span class="s">"LIUM CAISO Storage Pool I"</span>,
+    <span class="k">"status"</span>: <span class="s">"LISTED"</span>,
+    <span class="k">"totalSizeINR"</span>: <span class="n">126</span>,
+    <span class="k">"overallDSCR"</span>: <span class="n">1.37</span>,
+    <span class="k">"overallLQ"</span>: <span class="n">0.8664</span>,
+    <span class="k">"oc"</span>: <span class="n">25</span>,                  <span class="c">// overcollateralisation %</span>
+    <span class="k">"tranches"</span>: [
+      {
+        <span class="k">"id"</span>: <span class="s">"tranche_s01"</span>,
+        <span class="k">"class"</span>: <span class="s">"SENIOR"</span>,
+        <span class="k">"status"</span>: <span class="s">"OPEN"</span>,
+        <span class="k">"subscribedINR"</span>: <span class="n">0</span>,
+        <span class="k">"subscribers"</span>: []
+      },
+      <span class="c">/* MEZZANINE, JUNIOR */</span>
+    ]
+  }
+}</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- SECTION 9 — INVESTOR SUBSCRIBES                       -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div class="section" id="s9">
+  <div class="section-header">
+    <div class="section-num inv-s">9</div>
+    <div>
+      <div class="section-title" style="color:#f472b6">Investor — Subscribe to Tranche</div>
+      <div class="section-sub">Partial fills supported; no minimum; tranche closes automatically at 100%</div>
+    </div>
+  </div>
+
+  <div class="call">
+    <div class="call-header" onclick="toggle(this)">
+      <span class="actor-badge inv">Investor</span>
+      <span class="method POST">POST</span>
+      <span class="endpoint">/api/pools/{poolId}/tranches/{trancheId}/subscribe</span>
+      <span class="status-change">Tranche fill increases</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="call-body">
+      <div class="payload-grid">
+        <div class="payload-panel">
+          <div class="payload-label">Request body</div>
+          <pre>{
+  <span class="k">"investorType"</span>: <span class="s">"PENSION_FUND"</span>,
+  <span class="k">"amountINR"</span>: <span class="n">30</span>
+}
+
+<span class="c">// investorType options:
+// PENSION_FUND | INSURANCE | CREDIT_FUND
+// DFI | RETAIL | HEDGE_FUND
+
+// No minimum enforced.
+// Multiple investors can subscribe to the
+// same tranche until sizeINR is reached.
+// At 100% fill → tranche.status → SUBSCRIBED</span></pre>
+        </div>
+        <div class="payload-panel">
+          <div class="payload-label">Response  200</div>
+          <pre>{
+  <span class="k">"ok"</span>: <span class="b">true</span>,
+  <span class="k">"data"</span>: {
+    <span class="k">"id"</span>: <span class="s">"pool_ghi012"</span>,
+    <span class="k">"tranches"</span>: [
+      {
+        <span class="k">"id"</span>: <span class="s">"tranche_s01"</span>,
+        <span class="k">"class"</span>: <span class="s">"SENIOR"</span>,
+        <span class="k">"status"</span>: <span class="s">"OPEN"</span>,
+        <span class="k">"subscribedINR"</span>: <span class="n">30</span>,
+        <span class="k">"subscribers"</span>: [
+          {
+            <span class="k">"id"</span>: <span class="s">"sub_jkl345"</span>,
+            <span class="k">"investorId"</span>: <span class="s">"usr_inv001"</span>,
+            <span class="k">"investorType"</span>: <span class="s">"PENSION_FUND"</span>,
+            <span class="k">"amountINR"</span>: <span class="n">30</span>,
+            <span class="k">"subscribedAt"</span>: <span class="s">"2026-05-19T14:00:00Z"</span>
+          }
+        ]
+      }
+    ]
+  }
+}
+<span class="c">// Appears in investor's My Investments page
+// GET /api/pools → filter sub.investorId === user.id</span></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- Error envelope -->
+<div class="section" style="max-width:960px;margin:0 auto 40px">
+  <div class="call">
+    <div class="call-header" onclick="toggle(this)" style="cursor:pointer">
+      <span class="actor-badge sys">All Actors</span>
+      <span class="method GET">ALL</span>
+      <span class="endpoint">Error response envelope</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="call-body">
+      <div class="payload-grid">
+        <div class="payload-panel">
+          <div class="payload-label">Error response shape</div>
+          <pre>{
+  <span class="k">"ok"</span>: <span class="b">false</span>,
+  <span class="k">"error"</span>: {
+    <span class="k">"code"</span>: <span class="s">"INVALID_STATE"</span>,
+    <span class="k">"message"</span>: <span class="s">"Project is not open for financing offers"</span>
+  }
+}</pre>
+        </div>
+        <div class="payload-panel">
+          <div class="payload-label">Common error codes</div>
+          <pre><span class="s">"UNAUTHORIZED"</span>     <span class="c">// 401 — missing/invalid JWT</span>
+<span class="s">"FORBIDDEN"</span>         <span class="c">// 403 — wrong role</span>
+<span class="s">"NOT_FOUND"</span>         <span class="c">// 404 — resource not found</span>
+<span class="s">"INVALID_STATE"</span>     <span class="c">// 422 — wrong lifecycle status</span>
+<span class="s">"PTO_REQUIRED"</span>      <span class="c">// 422 — PTO must be APPROVED</span>
+<span class="s">"INVALID_ACTION"</span>    <span class="c">// 400 — unknown action field</span>
+<span class="s">"INVALID_TARGET"</span>    <span class="c">// 400 — publish target unknown</span></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+  function toggle(header) {
+    const body = header.nextElementSibling
+    const chevron = header.querySelector('.chevron')
+    const isOpen = body.classList.contains('open')
+    body.classList.toggle('open', !isOpen)
+    chevron.classList.toggle('open', !isOpen)
+  }
+
+  // Open all on load
+  document.querySelectorAll('.call-header').forEach(h => {
+    h.nextElementSibling.classList.add('open')
+    h.querySelector('.chevron').classList.add('open')
+  })
+</script>
+
+</body>
+</html>

@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { randomUUID } from 'crypto'
 import { getToken, upsertToken } from '@/lib/token-store'
+import { getUserFromHeader } from '@/lib/project-helpers'
 import type { Token, TokenOperationBody, TokenOperationRecord, ApiResponse } from '@/types'
 
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse<ApiResponse<Token>>> {
+  const user = getUserFromHeader(req.headers.get('Authorization'))
+  if (!user) return NextResponse.json({ ok: false, error: { code: 'UNAUTHORIZED', message: 'Authentication required' } }, { status: 401 })
+
   const { id } = await params
   const token = await getToken(id)
   if (!token) {

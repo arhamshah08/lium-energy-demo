@@ -23,18 +23,23 @@ export function TopNav() {
 
   return (
     <header className="bg-surface shadow-card sticky top-0 z-50 border-b border-outline-variant/40">
-      <nav className="flex justify-between items-center h-16 px-margin-desktop max-w-container mx-auto">
-        <Link href="/" className="text-headline-sm font-bold text-on-surface">
+      <nav className="flex items-center h-16 px-margin-desktop max-w-container mx-auto gap-6">
+        {/* Logo */}
+        <Link href="/" className="text-headline-sm font-bold text-on-surface shrink-0">
           LIUM<span className="text-primary"> Energy</span>
         </Link>
-        <div className="flex items-center gap-3">
+
+        <div className="flex-1" />
+
+        {/* User area */}
+        <div className="flex items-center gap-3 shrink-0">
           {user ? (
             <>
               <div className="hidden md:flex items-center gap-2.5">
                 <UserAvatar name={user.fullName || user.email} />
                 <div className="leading-tight">
                   <p className="text-sm font-medium text-on-surface">{user.fullName || user.email}</p>
-                  <p className="text-xs text-on-surface-variant capitalize">{user.role.replace('_', ' ')}</p>
+                  <p className="text-xs text-on-surface-variant capitalize">{user.role.replace(/_/g, ' ')}</p>
                 </div>
               </div>
               <Button variant="ghost" size="sm" onClick={signOut}>Sign Out</Button>

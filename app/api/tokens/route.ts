@@ -1,13 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { randomUUID } from 'crypto'
 import { listTokens, upsertToken } from '@/lib/token-store'
+import { getUserFromHeader } from '@/lib/project-helpers'
 import type { IssueTokenBody, Token, ApiResponse, LQScore, VGFMilestone } from '@/types'
 
-export async function GET(): Promise<NextResponse<ApiResponse<Token[]>>> {
+export async function GET(req: NextRequest): Promise<NextResponse<ApiResponse<Token[]>>> {
+  const user = getUserFromHeader(req.headers.get('Authorization'))
+  if (!user) return NextResponse.json({ ok: false, error: { code: 'UNAUTHORIZED', message: 'Authentication required' } }, { status: 401 })
   return NextResponse.json({ ok: true, data: await listTokens() })
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse<ApiResponse<Token>>> {
+  const user = getUserFromHeader(req.headers.get('Authorization'))
+  if (!user) return NextResponse.json({ ok: false, error: { code: 'UNAUTHORIZED', message: 'Authentication required' } }, { status: 401 })
+
   const body: IssueTokenBody = await req.json()
 
   const defaultLQ: LQScore = {
@@ -26,10 +32,10 @@ export async function POST(req: NextRequest): Promise<NextResponse<ApiResponse<T
   const token: Token = {
     id: randomUUID(),
     projectId: body.projectId,
-    tokenId: `UNITS-IN-ASSET-${new Date().getFullYear()}-${randomUUID().slice(0, 6).toUpperCase()}`,
+    tokenId: `UNITS-US-ASSET-${new Date().getFullYear()}-${randomUUID().slice(0, 6).toUpperCase()}`,
     status: 'ACTIVE',
     nominalValueINR: body.nominalValueINR,
-    currency: 'INR',
+    currency: 'USD',
     issuedTo: body.issuedTo,
     issuedAt: new Date().toISOString(),
     operations: [

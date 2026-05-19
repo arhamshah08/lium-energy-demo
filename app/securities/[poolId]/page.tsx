@@ -43,7 +43,7 @@ function TrancheCard({ tranche, poolId }: { tranche: Tranche; poolId: string }) 
             }`}>{tranche.status}</span>
           </div>
         </div>
-        <p className="text-data-point font-bold text-on-surface">₹{tranche.sizeINR.toLocaleString()} Mn</p>
+        <p className="text-data-point font-bold text-on-surface">${tranche.sizeINR.toLocaleString()}M</p>
         <p className="text-caption text-on-surface-variant">{tranche.coupon}% p.a. · {tranche.tenorYears}-year tenor</p>
       </div>
       <div className="bg-surface-container-lowest px-6 py-4 space-y-4">
@@ -56,7 +56,7 @@ function TrancheCard({ tranche, poolId }: { tranche: Tranche; poolId: string }) 
         <div>
           <div className="flex items-center justify-between mb-1.5">
             <span className="text-caption text-on-surface-variant">Subscribed</span>
-            <span className="text-caption font-bold text-on-surface">₹{tranche.subscribedINR.toLocaleString()} / ₹{tranche.sizeINR.toLocaleString()} Mn ({pct.toFixed(0)}%)</span>
+            <span className="text-caption font-bold text-on-surface">${tranche.subscribedINR.toLocaleString()} / ${tranche.sizeINR.toLocaleString()}M ({pct.toFixed(0)}%)</span>
           </div>
           <div className="h-2 bg-outline-variant/30 rounded-full overflow-hidden">
             <div className={`h-full ${colors.bg} rounded-full transition-all`} style={{ width: `${pct}%` }} />
@@ -72,7 +72,7 @@ function TrancheCard({ tranche, poolId }: { tranche: Tranche; poolId: string }) 
             {tranche.subscribers.map(s => (
               <div key={s.id} className="flex items-center justify-between">
                 <span className="text-[11px] text-on-surface-variant">{s.investorType.replace(/_/g, ' ')}</span>
-                <span className="text-[11px] font-bold text-on-surface">₹{s.amountINR.toLocaleString()} Mn</span>
+                <span className="text-[11px] font-bold text-on-surface">${s.amountINR.toLocaleString()}M</span>
               </div>
             ))}
           </div>
@@ -158,11 +158,11 @@ export default async function PoolDetailPage({
       {/* Key metrics */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         {[
-          { label: 'Pool Size',      value: `₹${pool.totalSizeINR.toLocaleString()} Mn`, accent: '' },
+          { label: 'Pool Size',      value: `$${pool.totalSizeINR.toLocaleString()}M`,  accent: '' },
           { label: 'Subscribed',     value: `${subscriptionPct.toFixed(0)}%`,            accent: 'text-secondary' },
           { label: 'DSCR (avg)',     value: `${pool.overallDSCR.toFixed(2)}x`,           accent: 'text-primary' },
           { label: 'LQ Score',       value: pool.overallLQ.toFixed(3),                   accent: 'text-secondary' },
-          { label: 'Cash Reserve',   value: `₹${pool.cashReserveINR} Mn`,               accent: '' },
+          { label: 'Cash Reserve',   value: `$${pool.cashReserveINR}M`,                accent: '' },
         ].map(({ label, value, accent }) => (
           <div key={label} className="bg-surface-container-lowest rounded-xl border border-outline-variant/60 p-4 shadow-card">
             <p className="text-label-caps text-on-surface-variant mb-1">{label}</p>
@@ -188,7 +188,7 @@ export default async function PoolDetailPage({
             >
               <span className="text-[10px] font-bold text-white z-10">{t.class.slice(0, 3)}</span>
               <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-on-surface text-surface text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20">
-                ₹{t.sizeINR} Mn @ {t.coupon}% — {t.rating}
+                ${t.sizeINR}M @ {t.coupon}% — {t.rating}
               </div>
             </div>
           ))}

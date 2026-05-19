@@ -30,12 +30,6 @@ export function SignupForm({ config }: { config: SignupFormConfig }) {
   const router = useRouter()
   const { user, loading: authLoading, signIn } = useAuth()
   const [loading, setLoading] = useState(false)
-
-  useEffect(() => {
-    if (!authLoading && user) router.replace(roleHomePath(user.role))
-  }, [user, authLoading, router])
-
-  if (authLoading || user) return null
   const [error, setError] = useState('')
   const [form, setForm] = useState({
     companyName: '',
@@ -47,6 +41,12 @@ export function SignupForm({ config }: { config: SignupFormConfig }) {
     password: '',
     financierType: '',
   })
+
+  useEffect(() => {
+    if (!authLoading && user) router.replace(roleHomePath(user.role))
+  }, [user, authLoading, router])
+
+  if (authLoading || user) return null
 
   const set = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setForm((prev) => ({ ...prev, [field]: e.target.value }))

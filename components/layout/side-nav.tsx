@@ -10,10 +10,14 @@ type NavSection = { label: string; items: NavItem[] }
 
 const ALL_SECTIONS: Record<string, NavSection> = {
   overview:      { label: 'OVERVIEW',      items: [{ icon: 'dashboard',       label: 'Command Center',  href: '/dashboard' }] },
-  assets:        { label: 'ASSETS',        items: [{ icon: 'account_balance', label: 'Asset Registry',  href: '/projects' }] },
+  assets:        { label: 'ASSETS',        items: [{ icon: 'account_balance', label: 'Project Registry', href: '/projects' }] },
+  discover:      { label: 'NETWORK',       items: [{ icon: 'groups',          label: 'Find Capital',    href: '/discover' }] },
+  credentials:   { label: 'CREDENTIALS',   items: [{ icon: 'badge',           label: 'Credentials',     href: '/credentials' }] },
   tokenisation:  { label: 'TOKENISATION',  items: [{ icon: 'token',           label: 'Token Registry',  href: '/tokenise' }] },
-  structuring:   { label: 'SECURITIES',    items: [{ icon: 'hub',             label: 'Pool Structuring', href: '/securities' }] },
+  structuring:   { label: 'SECURITIES',    items: [{ icon: 'hub',             label: 'Securities',      href: '/securities' }] },
   marketplace:   { label: 'MARKETPLACE',   items: [{ icon: 'storefront',      label: 'Marketplace',     href: '/marketplace' }] },
+  offers:        { label: 'FINANCING',     items: [{ icon: 'payments',        label: 'My Offers',       href: '/offers' }] },
+  investments:   { label: 'PORTFOLIO',     items: [{ icon: 'savings',         label: 'My Investments',  href: '/investments' }] },
   operations:    { label: 'OPERATIONS',    items: [
     { icon: 'receipt_long',  label: 'Ledger',     href: '#' },
     { icon: 'verified_user', label: 'Compliance', href: '#' },
@@ -21,11 +25,11 @@ const ALL_SECTIONS: Record<string, NavSection> = {
 }
 
 const ROLE_SECTIONS: Record<string, string[]> = {
-  developer:            ['overview', 'assets', 'tokenisation', 'marketplace'],
+  developer:            ['overview', 'assets', 'discover', 'credentials'],
   securitisation_agent: ['overview', 'assets', 'tokenisation', 'structuring', 'marketplace'],
-  financier:            ['overview', 'assets', 'tokenisation', 'structuring', 'marketplace'],
+  financier:            ['overview', 'assets', 'offers', 'marketplace'],
   portfolio_manager:    ['overview', 'assets', 'tokenisation', 'structuring', 'marketplace', 'operations'],
-  investor:             ['overview', 'tokenisation', 'marketplace'],
+  investor:             ['overview', 'structuring', 'marketplace', 'investments'],
 }
 
 const BOTTOM_ITEMS: NavItem[] = [

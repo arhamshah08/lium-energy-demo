@@ -12,11 +12,14 @@ const ASSET_META: Record<AssetType, { label: string; icon: string }> = {
   SOLAR_BESS_HYBRID:{ label: 'Solar+BESS Hybrid',icon: 'energy_program_saving' },
 }
 
-const STEP_MAP: Record<ProjectStatus, number> & Record<string, number> = {
+const STEP_MAP: Record<string, number> = {
   DRAFT:               1,
+  COMING_SOON:         2,
   DOCUMENTS_PENDING:   2,
   TELEMETRY_PENDING:   3,
   SUBMITTED:           3,
+  ACTIVE:              3,
+  TRANSACTING:         3,
   TOKENISED:           3,
 }
 
@@ -26,8 +29,10 @@ export function ProjectCard({ project }: { project: Project }) {
   const assetMeta = (ASSET_META as Record<string, typeof ASSET_META[AssetType]>)[project.assetType]
     ?? { label: project.assetType, icon: 'energy_program_saving' }
   const { label: assetLabel, icon: assetIcon } = assetMeta
-  const completedSteps = (STEP_MAP as Record<string, number>)[project.status] ?? 0
-  const isSubmitted = project.status === 'SUBMITTED'
+  const completedSteps = STEP_MAP[project.status] ?? 0
+  const isSubmitted = project.status === 'SUBMITTED' || project.status === 'ACTIVE'
+  const isComingSoon = project.status === 'COMING_SOON'
+  const isTransacting = project.status === 'TRANSACTING'
 
   return (
     <Link href={`/projects/${project.id}`} className="block group">
@@ -73,14 +78,14 @@ export function ProjectCard({ project }: { project: Project }) {
         <div className="px-6 pb-6 pt-2 border-t border-outline-variant/30">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[10px] font-bold text-on-surface-variant tracking-widest uppercase">
-              {isSubmitted ? 'Onboarding Complete' : `Step ${completedSteps} of ${TOTAL_STEPS}`}
+              {isSubmitted ? 'PTO Achieved · Ready' : isComingSoon ? 'Coming Soon · Pre-PTO' : isTransacting ? 'Deal in Progress' : `Step ${completedSteps} of ${TOTAL_STEPS}`}
             </span>
-            {isSubmitted && (
+            {(isSubmitted || isTransacting) && (
               <span
-                className="material-symbols-outlined text-secondary text-[16px]"
+                className={`material-symbols-outlined text-[16px] ${isTransacting ? 'text-primary' : 'text-secondary'}`}
                 style={{ fontVariationSettings: "'FILL' 1" }}
               >
-                check_circle
+                {isTransacting ? 'pending_actions' : 'check_circle'}
               </span>
             )}
           </div>

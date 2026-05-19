@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useAuth } from '@/components/auth/auth-context'
 import type { TokenOperationType, Token } from '@/types'
 
 const OPERATIONS: Array<{
@@ -70,6 +71,7 @@ export function TokenOpsPanel({
   currentStatus: Token['status']
 }) {
   const router = useRouter()
+  const { token: authToken } = useAuth()
   const [pending, setPending] = useState<TokenOperationType | null>(null)
   const [modal, setModal] = useState<TokenOperationType | null>(null)
   const [notes, setNotes] = useState('')
@@ -85,7 +87,7 @@ export function TokenOpsPanel({
     try {
       const res = await fetch(`/api/tokens/${tokenId}/operations`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
         body: JSON.stringify({
           operation: op,
           notes: notes || undefined,
@@ -191,7 +193,7 @@ export function TokenOpsPanel({
 
             {(['LOCK', 'PLEDGE', 'REDEEM'].includes(modal)) && (
               <div>
-                <label className="text-label-caps text-on-surface-variant block mb-1.5">Amount (₹ Mn)</label>
+                <label className="text-label-caps text-on-surface-variant block mb-1.5">Amount ($M)</label>
                 <input
                   type="number"
                   value={amount}

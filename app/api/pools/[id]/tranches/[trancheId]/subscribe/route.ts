@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { randomUUID } from 'crypto'
 import { getPool, upsertPool } from '@/lib/token-store'
+import { getUserFromHeader } from '@/lib/project-helpers'
 import type { Pool, SubscribeTrancheBody, ApiResponse } from '@/types'
 
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string; trancheId: string }> },
 ): Promise<NextResponse<ApiResponse<Pool>>> {
+  const user = getUserFromHeader(req.headers.get('Authorization'))
+  if (!user) return NextResponse.json({ ok: false, error: { code: 'UNAUTHORIZED', message: 'Authentication required' } }, { status: 401 })
+
   const { id, trancheId } = await params
   const pool = await getPool(id)
   if (!pool) {
@@ -31,6 +35,7 @@ export async function POST(
           ...t.subscribers,
           {
             id: randomUUID(),
+            investorId: user.id,
             investorType: body.investorType,
             amountINR: body.amountINR,
             subscribedAt: new Date().toISOString(),

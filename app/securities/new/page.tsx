@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useAuth } from '@/components/auth/auth-context'
 import type { TrancheClass, TrancheRating } from '@/types'
 
 const TRANCHE_DEFAULTS: Array<{
@@ -22,6 +23,7 @@ const RATINGS: TrancheRating[] = ['AAA', 'AA+', 'AA', 'A+', 'A', 'BBB', 'BB', 'B
 
 export default function NewPoolPage() {
   const router = useRouter()
+  const { token: authToken } = useAuth()
   const [poolName, setPoolName] = useState('LIUM Pool 2026-')
   const [totalSize, setTotalSize] = useState('1799')
   const [loading, setLoading] = useState(false)
@@ -55,7 +57,7 @@ export default function NewPoolPage() {
     try {
       const res = await fetch('/api/pools', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
         body: JSON.stringify({
           name: poolName.trim(),
           tokenIds: [],
@@ -116,7 +118,7 @@ export default function NewPoolPage() {
             </div>
 
             <div>
-              <label className="text-label-caps text-on-surface-variant block mb-1.5">Total Pool Size (₹ Mn)</label>
+              <label className="text-label-caps text-on-surface-variant block mb-1.5">Total Pool Size ($M)</label>
               <input
                 type="number"
                 value={totalSize}
@@ -144,7 +146,7 @@ export default function NewPoolPage() {
                     <div className={`w-3 h-3 rounded-sm ${t.color}`} />
                     <span className="text-label-caps font-bold text-on-surface">{t.class}</span>
                     <span className="text-caption text-on-surface-variant ml-auto">
-                      ₹{total > 0 ? Math.round((t.sizePct / 100) * total).toLocaleString() : '—'} Mn
+                      {total > 0 ? `$${Math.round((t.sizePct / 100) * total).toLocaleString()}M` : '—'}
                     </span>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
@@ -228,7 +230,7 @@ export default function NewPoolPage() {
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-[11px] text-on-surface-variant">{t.sizePct}% allocation</span>
-                        <span className="text-[11px] font-bold text-on-surface">₹{size.toLocaleString()} Mn</span>
+                        <span className="text-[11px] font-bold text-on-surface">${size.toLocaleString()}M</span>
                       </div>
                     </div>
                   </div>
@@ -238,7 +240,7 @@ export default function NewPoolPage() {
 
             <div className="border-t border-outline-variant/20 mt-4 pt-4 flex items-center justify-between">
               <span className="text-caption text-on-surface-variant">Total Pool Size</span>
-              <span className="text-data-point font-bold text-on-surface">₹{parseFloat(totalSize || '0').toLocaleString()} Mn</span>
+              <span className="text-data-point font-bold text-on-surface">${parseFloat(totalSize || '0').toLocaleString()}M</span>
             </div>
           </div>
 

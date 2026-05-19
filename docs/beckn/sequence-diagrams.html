@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LIUM Energy — Beckn Sequence Diagrams</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0f1929;
+      color: #e8eaf0;
+      padding: 40px 24px;
+      min-height: 100vh;
+    }
+    header {
+      text-align: center;
+      margin-bottom: 56px;
+    }
+    header h1 {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: #fff;
+    }
+    header h1 span { color: #4dd0ca; }
+    header p {
+      margin-top: 8px;
+      font-size: 14px;
+      color: #8899aa;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .tabs {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 40px;
+    }
+    .tab {
+      padding: 10px 28px;
+      border-radius: 999px;
+      border: 1.5px solid #2a3a4a;
+      background: transparent;
+      color: #8899aa;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      transition: all 0.2s;
+    }
+    .tab.active {
+      background: #4dd0ca;
+      border-color: #4dd0ca;
+      color: #0f1929;
+    }
+    .tab:hover:not(.active) {
+      border-color: #4dd0ca;
+      color: #4dd0ca;
+    }
+    .diagram-panel {
+      display: none;
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 40px;
+      max-width: 1100px;
+      margin: 0 auto;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+    }
+    .diagram-panel.active { display: block; }
+    .diagram-panel h2 {
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #1a2a3a;
+      margin-bottom: 8px;
+    }
+    .diagram-panel p.sub {
+      font-size: 13px;
+      color: #667788;
+      margin-bottom: 32px;
+    }
+    .mermaid {
+      overflow-x: auto;
+    }
+    .legend {
+      margin-top: 32px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: #445566;
+    }
+    .legend-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>LIUM<span> Energy</span> — Beckn Protocol</h1>
+  <p>Schema Design · Sequence Diagrams · v1.0 Draft</p>
+</header>
+
+<div class="tabs">
+  <button class="tab active" onclick="showTab('full')">Full Lifecycle</button>
+  <button class="tab" onclick="showTab('discovery')">Discovery Flow (Beckn v2)</button>
+</div>
+
+<!-- FULL LIFECYCLE -->
+<div class="diagram-panel active" id="panel-full">
+  <h2>Full Asset-to-Security Lifecycle</h2>
+  <p class="sub">Developer onboarding → PTO Gate → Financier → Securitisation → Investor → Capital Recycled</p>
+  <div class="mermaid">
+sequenceDiagram
+    actor DEV as Developer
+    participant LIUM as LIUM Platform
+    participant DS as Beckn Discovery Service
+    actor FIN as Financier
+    actor SA as Securitisation Agent
+    actor PM as Portfolio Manager
+    actor INV as Investor
+
+    rect rgb(235, 245, 255)
+        Note over DEV,LIUM: ONBOARDING — Steps 1 to 4
+        DEV->>LIUM: Create asset (name, type, jurisdiction)
+        DEV->>LIUM: Upload documents (PPA, audit, legal title)
+        DEV->>LIUM: Connect telemetry + run verification test
+        Note over LIUM: status: SUBMITTED · verified = true
+        DEV->>LIUM: Set LQ risk profile (A, D, V, delta)
+        Note over LIUM: riskProfile saved · lqComposite computed
+    end
+
+    rect rgb(255, 248, 210)
+        Note over LIUM,DS: PTO GATE — status becomes ACTIVE · asset is now transactable
+        LIUM->>DS: Publish CommissionedEnergyAsset catalog entry
+    end
+
+    rect rgb(220, 255, 235)
+        Note over FIN,DS: STAGE 1 — Financier Discovery
+        FIN->>DS: /discover · ptoStatus=CONFIRMED · jurisdiction=ERCOT
+        DS->>LIUM: Forward /discover
+        LIUM-->>DS: /on_discover · Catalog with resourceAttributes and LQ score
+        DS-->>FIN: Energy asset catalog
+        FIN->>LIUM: Express Interest
+        Note over LIUM: status becomes TRANSACTING
+    end
+
+    rect rgb(245, 235, 255)
+        Note over SA,LIUM: STAGE 2 — Securitisation
+        SA->>DS: /discover · TRANSACTING assets
+        DS-->>SA: Catalog
+        SA->>LIUM: Pool assets · issue UNITS token
+        Note over LIUM: status becomes TOKENISED
+    end
+
+    rect rgb(255, 235, 248)
+        Note over SA,INV: STAGE 3 — Tranche Issuance and Investment
+        SA->>DS: Publish pool · Senior / Mezzanine / Junior tranches
+        PM->>DS: /discover · pools and performance data
+        DS-->>PM: Pool catalog with offerAttributes
+        INV->>DS: /discover · marketplace securities
+        DS-->>INV: Tranche listings
+        INV->>LIUM: Subscribe to tranche
+    end
+
+    rect rgb(220, 255, 220)
+        Note over DEV,LIUM: CAPITAL RECYCLED
+        LIUM-->>DEV: Debt retired. Redeploy into next asset.
+    end
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#dbeafe"></div> Developer Onboarding</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#fef9c3"></div> PTO Gate (key milestone)</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#dcfce7"></div> Stage 1 · Financier</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#f3e8ff"></div> Stage 2 · Securitisation</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#fce7f3"></div> Stage 3 · Investors</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#dcfce7"></div> Capital Recycled</div>
+  </div>
+</div>
+
+<!-- DISCOVERY ONLY -->
+<div class="diagram-panel" id="panel-discovery">
+  <h2>Beckn v2 · Discovery Flow</h2>
+  <p class="sub">Exact protocol messages — BAP (Financier) → Beckn Gateway → LIUM BPP → Supabase</p>
+  <div class="mermaid">
+sequenceDiagram
+    participant FIN as Financier App (BAP)
+    participant BG as Beckn Gateway
+    participant LIUM as LIUM BPP
+    participant DB as Supabase
+
+    Note over FIN,BG: Beckn v2 /discover
+
+    FIN->>BG: POST /discover
+    Note right of FIN: context.action = discover<br/>context.version = 2.0.0<br/>context.schemaContext = [CommissionedEnergyAsset/v1.0]<br/>intent.filters: ptoStatus=CONFIRMED, jurisdiction=ERCOT
+
+    BG->>LIUM: POST /discover (forwarded + registry-authenticated)
+
+    LIUM->>DB: SELECT projects WHERE status IN<br/>(COMING_SOON, ACTIVE, TRANSACTING, TOKENISED)
+    DB-->>LIUM: Project rows (with telemetry JSONB)
+
+    LIUM->>LIUM: Build Catalog response
+    Note right of LIUM: resource.resourceAttributes<br/>  @context: lium/CommissionedEnergyAsset/v1.0<br/>  assetType, capacityMW, ptoStatus, jurisdiction<br/>resource.performanceAttributes<br/>  lqComposite, gate, assessedAt<br/>provider.providerAttributes<br/>  developerName, liuMVerified=true
+
+    LIUM-->>BG: POST /on_discover · Catalog payload
+    BG-->>FIN: Catalog with energy assets
+
+    Note over FIN,BG: Beckn v2 /confirm (Express Interest)
+
+    FIN->>BG: POST /confirm
+    Note right of FIN: commitmentAttributes<br/>  type = EXPRESSION_OF_INTEREST<br/>  resourceId = asset-id
+
+    BG->>LIUM: POST /confirm (forwarded)
+    LIUM->>DB: UPDATE projects SET status = TRANSACTING
+    DB-->>LIUM: Updated
+    LIUM-->>BG: POST /on_confirm
+    BG-->>FIN: Confirmation · status: TRANSACTING
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#dbeafe"></div> BAP initiates</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#fef3c7"></div> Gateway routing</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#dcfce7"></div> BPP processing</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#f3e8ff"></div> DB operations</div>
+  </div>
+</div>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'default',
+    sequence: {
+      actorMargin: 80,
+      messageMargin: 40,
+      boxTextMargin: 8,
+      noteMargin: 16,
+      mirrorActors: false,
+      useMaxWidth: true,
+    },
+    themeVariables: {
+      primaryColor: '#e8f4ff',
+      primaryTextColor: '#1a2a3a',
+      primaryBorderColor: '#4dd0ca',
+      lineColor: '#2a5080',
+      secondaryColor: '#f0fff4',
+      tertiaryColor: '#fff8f0',
+      noteBkgColor: '#fffde7',
+      noteTextColor: '#1a2a3a',
+      activationBkgColor: '#e0f7fa',
+      sequenceNumberColor: '#4dd0ca',
+    }
+  });
+
+  function showTab(id) {
+    document.querySelectorAll('.tab').forEach((t, i) => {
+      t.classList.toggle('active', ['full','discovery'][i] === id);
+    });
+    document.querySelectorAll('.diagram-panel').forEach(p => {
+      p.classList.toggle('active', p.id === 'panel-' + id);
+    });
+  }
+</script>
+</body>
+</html>

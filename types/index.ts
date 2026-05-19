@@ -1,13 +1,74 @@
-export type Jurisdiction = 'ERCOT' | 'PJM' | 'CAISO' | 'MISO' | 'INDIA_CERC' | 'INDIA_GUJARAT' | 'INDIA_MAHARASHTRA'
+export type Jurisdiction = 'ERCOT' | 'PJM' | 'CAISO' | 'MISO' | 'NYISO' | 'SPP' | 'WECC'
 export type AssetType = 'BESS' | 'MICROGRID' | 'DER_CLUSTER' | 'SOLAR_PV' | 'WIND' | 'SOLAR_BESS_HYBRID'
 export type ConnectionMethod = 'DIRECT_API' | 'IOT_GATEWAY' | 'DATA_BRIDGE' | 'IEEE_2030_5'
 
+export type PtoStatus = 'PRE_PROCESSING' | 'PROCESSING' | 'APPROVED' | 'REJECTED'
+
 export type ProjectStatus =
   | 'DRAFT'
+  | 'COMING_SOON'
   | 'DOCUMENTS_PENDING'
   | 'TELEMETRY_PENDING'
   | 'SUBMITTED'
+  | 'ACTIVE'
+  | 'PUBLISHED_FOR_FINANCE'  // developer published; financiers can submit offers
+  | 'OFFER_RECEIVED'          // at least one offer received
+  | 'FINANCING_ACCEPTED'      // developer accepted an offer
+  | 'PUBLISHED_FOR_SA'        // developer published for securitisation (requires PTO=APPROVED)
+  | 'TRANSACTING'
   | 'TOKENISED'
+
+export type OfferStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'REVISION_REQUESTED' | 'EXPIRED' | 'WITHDRAWN'
+export type InterestRateType = 'FIXED' | 'FLOATING'
+
+export interface ProjectFinancials {
+  capacityMW?: number
+  capacityMWh?: number
+  codDate?: string
+  assetLifeYears?: number
+  ppaCounterparty?: string
+  ppaTariffMwh?: number
+  ppaContractEndDate?: string
+  totalCapexM?: number
+  debtPct?: number
+  equityPct?: number
+  annualRevenueM?: number
+  annualOpexM?: number
+  annualDebtServiceM?: number
+  gapFundingEligible?: boolean
+  gapFundingProgram?: string
+  assetDetails?: Record<string, unknown>
+}
+
+export interface FinancierOffer {
+  id: string
+  projectId: string
+  financierId: string
+  financierName?: string
+  financierCompany?: string
+  loanAmountM: number
+  rateType: InterestRateType
+  ratePct?: number
+  sofrSpreadPct?: number
+  tenorYears: number
+  dscrCovenant: number
+  securityRequirements?: string
+  conditionsPrecedent?: string
+  expiresAt: string
+  status: OfferStatus
+  revisionNotes?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface SavedQualificationGate {
+  id: string
+  label: string
+  category: string
+  status: 'PASS' | 'FAIL' | 'REVIEW'
+  metric: string
+  icon: string
+}
 
 export interface DocumentRecord {
   type: 'TECHNICAL_AUDIT' | 'PPA_AGREEMENT' | 'INTERCONNECTION_STUDY' | 'INSURANCE_CERTIFICATE' | 'BESPA_AGREEMENT' | 'LEGAL_TITLE'
@@ -16,12 +77,25 @@ export interface DocumentRecord {
   parsed?: Record<string, string | null>
 }
 
+export interface RiskProfile {
+  availability: number    // A(t) 0–1
+  dscrScore: number       // D(t) 0–1
+  verification: number    // V(t) 0–1
+  penalty: number         // δ 0–1
+  lqComposite: number     // [A×0.40 + D×0.35 + V×0.25] × (1−δ)
+  gate: 'PASS' | 'REVIEW' | 'FAIL'
+  assessedAt: string
+}
+
 export interface TelemetryConfig {
   connectionMethod: ConnectionMethod
   apiEndpoint: string
   assetIdMapping: string
   verified: boolean
   verifiedAt?: string
+  riskProfile?: RiskProfile
+  dscrProjection?: DSCRYear[]
+  qualificationGates?: SavedQualificationGate[]
 }
 
 export interface Project {
@@ -31,8 +105,8 @@ export interface Project {
   location: string
   jurisdiction: Jurisdiction
   assetType: AssetType
-  capacityMW?: number
-  capacityMWh?: number
+  ptoStatus?: PtoStatus
+  financials?: ProjectFinancials
   createdAt: string
   updatedAt: string
   documents: DocumentRecord[]
@@ -100,9 +174,9 @@ export interface DSCRYear {
 export interface Token {
   id: string
   projectId: string
-  tokenId: string           // e.g. UNITS-IN-BESS-2026-001
+  tokenId: string           // e.g. UNITS-US-ASSET-2026-001
   status: TokenStatus
-  nominalValueINR: number   // INR Mn
+  nominalValueINR: number   // USD M
   currency: string
   issuedTo: string
   issuedAt: string
@@ -130,6 +204,7 @@ export type InvestorType = 'PENSION_FUND' | 'INSURANCE' | 'CREDIT_FUND' | 'DFI' 
 
 export interface TrancheSubscriber {
   id: string
+  investorId?: string
   investorType: InvestorType
   amountINR: number
   subscribedAt: string
@@ -140,7 +215,7 @@ export interface Tranche {
   poolId: string
   class: TrancheClass
   rating: TrancheRating
-  sizeINR: number           // INR Mn
+  sizeINR: number           // USD M
   coupon: number            // % p.a.
   tenorYears: number
   isin?: string
@@ -192,6 +267,33 @@ export interface CreateProjectBody {
   assetType: AssetType
   actorRole?: string
   revenueTypes?: string[]
+  financials?: ProjectFinancials
+}
+
+export interface CreateOfferBody {
+  loanAmountM: number
+  rateType: InterestRateType
+  ratePct?: number
+  sofrSpreadPct?: number
+  tenorYears: number
+  dscrCovenant: number
+  securityRequirements?: string
+  conditionsPrecedent?: string
+  expiresAt: string
+}
+
+export interface UpdateOfferBody {
+  action: 'accept' | 'reject' | 'request_revision' | 'resubmit'
+  revisionNotes?: string
+  updatedTerms?: Partial<CreateOfferBody>
+}
+
+export interface UpdatePtoBody {
+  ptoStatus: PtoStatus
+}
+
+export interface PublishProjectBody {
+  target: 'finance' | 'sa'
 }
 
 export interface UpdateDocumentsBody {

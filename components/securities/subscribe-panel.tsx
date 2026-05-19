@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useAuth } from '@/components/auth/auth-context'
 import type { InvestorType } from '@/types'
 
 const INVESTOR_TYPES: InvestorType[] = ['PENSION_FUND', 'INSURANCE', 'CREDIT_FUND', 'DFI', 'RETAIL', 'HEDGE_FUND']
@@ -16,6 +17,7 @@ export function SubscribePanel({
   remaining: number
 }) {
   const router = useRouter()
+  const { token: authToken } = useAuth()
   const [open, setOpen] = useState(false)
   const [investorType, setInvestorType] = useState<InvestorType>('PENSION_FUND')
   const [amount, setAmount] = useState('')
@@ -26,7 +28,7 @@ export function SubscribePanel({
   async function handleSubscribe() {
     const amt = parseFloat(amount)
     if (!amt || amt <= 0 || amt > remaining) {
-      setError(`Amount must be between 1 and ${remaining} Mn`)
+      setError(`Amount must be between 1 and ${remaining}M`)
       return
     }
     setLoading(true)
@@ -34,7 +36,7 @@ export function SubscribePanel({
     try {
       const res = await fetch(`/api/pools/${poolId}/tranches/${trancheId}/subscribe`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
         body: JSON.stringify({ investorType, amountINR: amt }),
       })
       const json = await res.json()
@@ -81,7 +83,7 @@ export function SubscribePanel({
             </div>
 
             <p className="text-caption text-on-surface-variant">
-              Remaining available: <strong>₹{remaining.toLocaleString()} Mn</strong>
+              Remaining available: <strong>${remaining.toLocaleString()}M</strong>
             </p>
 
             <div>
@@ -98,12 +100,12 @@ export function SubscribePanel({
             </div>
 
             <div>
-              <label className="text-label-caps text-on-surface-variant block mb-1.5">Subscription Amount (₹ Mn)</label>
+              <label className="text-label-caps text-on-surface-variant block mb-1.5">Subscription Amount ($M)</label>
               <input
                 type="number"
                 value={amount}
                 onChange={e => setAmount(e.target.value)}
-                placeholder={`Max ₹${remaining} Mn`}
+                placeholder={`Max $${remaining}M`}
                 className="w-full px-3 py-2.5 rounded-lg border border-outline-variant bg-surface-container text-on-surface text-caption focus:outline-none focus:ring-2 focus:ring-primary/20"
               />
             </div>

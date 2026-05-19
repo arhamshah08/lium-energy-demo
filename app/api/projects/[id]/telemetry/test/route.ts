@@ -45,7 +45,9 @@ export async function POST(
     },
   }
 
-  const parsedTelemetry = JSON.parse(project.telemetry as string)
+  const parsedTelemetry = typeof project.telemetry === 'string'
+    ? JSON.parse(project.telemetry)
+    : project.telemetry as object
   await updateProject(id, {
     status: 'SUBMITTED',
     updated_at: new Date().toISOString(),

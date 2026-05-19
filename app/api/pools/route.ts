@@ -1,25 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { randomUUID } from 'crypto'
 import { listPools, upsertPool } from '@/lib/token-store'
+import { getUserFromHeader } from '@/lib/project-helpers'
 import type { Pool, CreatePoolBody, ApiResponse } from '@/types'
 
-export async function GET(): Promise<NextResponse<ApiResponse<Pool[]>>> {
+export async function GET(req: NextRequest): Promise<NextResponse<ApiResponse<Pool[]>>> {
+  const user = getUserFromHeader(req.headers.get('Authorization'))
+  if (!user) return NextResponse.json({ ok: false, error: { code: 'UNAUTHORIZED', message: 'Authentication required' } }, { status: 401 })
   return NextResponse.json({ ok: true, data: await listPools() })
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse<ApiResponse<Pool>>> {
+  const user = getUserFromHeader(req.headers.get('Authorization'))
+  if (!user) return NextResponse.json({ ok: false, error: { code: 'UNAUTHORIZED', message: 'Authentication required' } }, { status: 401 })
+
   const body: CreatePoolBody = await req.json()
   const poolId = randomUUID()
 
   const pool: Pool = {
     id: poolId,
     name: body.name,
-    arranger: 'LIUM Energy Finternet Pvt Ltd',
+    arranger: 'LIUM Energy Finternet LLC',
     tokenIds: body.tokenIds,
     projectIds: [],
     status: 'STRUCTURING',
     totalSizeINR: body.tranches.reduce((s, t) => s + t.sizeINR, 0),
-    currency: 'INR',
+    currency: 'USD',
     tranches: body.tranches.map(t => ({
       id: randomUUID(),
       poolId,

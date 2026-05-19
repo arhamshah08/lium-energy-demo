@@ -80,7 +80,7 @@ export default async function DashboardPage() {
                   {[
                     { label: 'Nominal',  value: `$${token.nominalValueINR.toLocaleString()}M` },
                     { label: 'Status',   value: token.status },
-                    { label: 'ITC Out',  value: `$${token.vgfMilestones.filter(v => v.status === 'RELEASED').reduce((s, v) => s + v.amountINR, 0)}M` },
+                    { label: 'Support',  value: `$${token.vgfMilestones.filter(v => v.status === 'RELEASED').reduce((s, v) => s + v.amountINR, 0)}M` },
                     { label: 'Ops',      value: token.operations.length },
                   ].map(({ label, value }) => (
                     <div key={label} className="bg-surface-container-low rounded-lg p-2.5">
@@ -116,7 +116,7 @@ export default async function DashboardPage() {
             { icon: 'token',        label: 'Token Registry',           href: '/tokenise',                desc: `${tokens.length} token${tokens.length !== 1 ? 's' : ''} active` },
             { icon: 'hub',          label: 'Securities Pools',         href: '/securities',              desc: `${pools.length} pool${pools.length !== 1 ? 's' : ''} structured` },
             { icon: 'storefront',   label: 'Investor Marketplace',     href: '/marketplace',             desc: `${listedPools} pool${listedPools !== 1 ? 's' : ''} listed` },
-            { icon: 'account_balance', label: 'Asset Registry',        href: '/projects',                desc: 'Manage registered assets' },
+            { icon: 'account_balance', label: 'Project Registry',       href: '/projects',                desc: 'Manage registered projects' },
           ].map(({ icon, label, href, desc }) => (
             <Link
               key={href}

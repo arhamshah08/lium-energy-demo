@@ -1,5 +1,7 @@
 import Link from 'next/link'
 import { listTokens } from '@/lib/token-store'
+import { getProjectsByStatus } from '@/lib/store'
+import { IssueTokenQueue } from '@/components/tokenise/issue-token-queue'
 import type { Token } from '@/types'
 
 export const dynamic = 'force-dynamic'
@@ -25,7 +27,7 @@ function statusIcon(status: Token['status']) {
 }
 
 export default async function TokenisePage() {
-  const tokens = await listTokens()
+  const [tokens, saQueue] = await Promise.all([listTokens(), getProjectsByStatus('PUBLISHED_FOR_SA')])
 
   const totalAUM = tokens.reduce((s, t) => s + t.nominalValueINR, 0)
   const active   = tokens.filter(t => t.status === 'ACTIVE').length
@@ -41,20 +43,22 @@ export default async function TokenisePage() {
             UNITS security tokens issued against onboarded energy assets
           </p>
         </div>
-        <Link
-          href="/onboard/project-details"
-          className="inline-flex items-center gap-2 bg-primary text-on-primary px-6 py-3 rounded-lg text-label-caps font-bold hover:opacity-90 transition-all shadow-sm shrink-0"
-        >
-          <span className="material-symbols-outlined text-[18px]">add</span>
-          Issue Token
-        </Link>
+        {saQueue.length > 0 && (
+          <div className="inline-flex items-center gap-2 bg-secondary/10 text-secondary border border-secondary/20 px-5 py-2.5 rounded-lg text-label-caps font-bold shrink-0">
+            <span className="material-symbols-outlined text-[16px]">pending_actions</span>
+            {saQueue.length} ready for tokenisation
+          </div>
+        )}
       </div>
+
+      {/* SA queue — projects ready for tokenisation */}
+      {saQueue.length > 0 && <IssueTokenQueue projects={saQueue} />}
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
           { label: 'Total Tokens',   value: tokens.length, icon: 'token',       accent: '' },
-          { label: 'Total AUM (₹ Mn)', value: totalAUM.toFixed(0), icon: 'payments',   accent: 'text-secondary' },
+          { label: 'Total AUM ($M)', value: `$${totalAUM.toFixed(0)}`, icon: 'payments',   accent: 'text-secondary' },
           { label: 'Active',         value: active,         icon: 'check_circle', accent: 'text-secondary' },
           { label: 'Locked in Pool', value: locked,         icon: 'lock',        accent: 'text-primary' },
         ].map(({ label, value, icon, accent }) => (
@@ -120,7 +124,7 @@ export default async function TokenisePage() {
 
                 {/* Nominal */}
                 <div className="text-right shrink-0 hidden md:block">
-                  <p className="text-data-point font-bold text-on-surface">₹{token.nominalValueINR.toLocaleString()} Mn</p>
+                  <p className="text-data-point font-bold text-on-surface">${token.nominalValueINR.toLocaleString()}M</p>
                   <p className="text-label-caps text-on-surface-variant">NOMINAL VALUE</p>
                 </div>
 

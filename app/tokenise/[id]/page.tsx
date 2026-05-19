@@ -30,7 +30,7 @@ function VGFCard({ milestone }: { milestone: VGFMilestone }) {
       <p className="text-caption font-medium text-on-surface">{milestone.description}</p>
       <p className="text-[11px] text-on-surface-variant">{milestone.condition}</p>
       <div className="flex items-center justify-between pt-1">
-        <span className="text-caption font-bold text-on-surface">₹{milestone.amountINR} Mn</span>
+        <span className="text-caption font-bold text-on-surface">${milestone.amountINR}M</span>
         {milestone.releasedAt && (
           <span className="text-[10px] text-on-surface-variant">
             {new Date(milestone.releasedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
@@ -211,7 +211,7 @@ export default async function TokenDetailPage({
                     <p className="text-[11px] text-on-surface-variant mt-0.5 font-mono break-all">{op.txHash}</p>
                   </div>
                   <div className="text-right shrink-0">
-                    {op.amount && <p className="text-caption font-bold text-on-surface">₹{op.amount} Mn</p>}
+                    {op.amount && <p className="text-caption font-bold text-on-surface">${op.amount}M</p>}
                     <p className="text-[11px] text-on-surface-variant">
                       {new Date(op.timestamp).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                     </p>
@@ -236,12 +236,12 @@ export default async function TokenDetailPage({
             </div>
             <dl className="space-y-3">
               {[
-                { label: 'Total CAPEX',      value: `₹${token.totalCapexINR.toLocaleString()} Mn` },
-                { label: 'Pool Debt',        value: `₹${token.debtINR.toLocaleString()} Mn` },
-                { label: 'Equity',           value: `₹${token.equityINR.toLocaleString()} Mn` },
-                { label: 'Annual Revenue',   value: `₹${token.annualRevenueINR.toFixed(2)} Mn` },
-                { label: 'Annual Opex',      value: `₹${token.annualOpexINR.toFixed(0)} Mn` },
-                { label: 'Debt Service/yr',  value: `₹${token.annualDebtServiceINR.toFixed(0)} Mn` },
+                { label: 'Total CAPEX',      value: `$${token.totalCapexINR.toLocaleString()}M` },
+                { label: 'Pool Debt',        value: `$${token.debtINR.toLocaleString()}M` },
+                { label: 'Equity',           value: `$${token.equityINR.toLocaleString()}M` },
+                { label: 'Annual Revenue',   value: `$${token.annualRevenueINR.toFixed(2)}M` },
+                { label: 'Annual Opex',      value: `$${token.annualOpexINR.toFixed(0)}M` },
+                { label: 'Debt Service/yr',  value: `$${token.annualDebtServiceINR.toFixed(0)}M` },
               ].map(({ label, value }) => (
                 <div key={label} className="flex items-center justify-between">
                   <dt className="text-caption text-on-surface-variant">{label}</dt>
@@ -256,10 +256,10 @@ export default async function TokenDetailPage({
             <div className="px-5 pt-5 pb-4 border-b border-outline-variant/40 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="material-symbols-outlined text-secondary text-[20px]">military_tech</span>
-                <h2 className="text-label-caps font-bold text-on-surface tracking-widest">VGF Milestones</h2>
+                <h2 className="text-label-caps font-bold text-on-surface tracking-widest">Credit Support Milestones</h2>
               </div>
               <div className="text-right">
-                <p className="text-caption font-bold text-on-surface">₹{vgfReleased}/{vgfTotal} Mn</p>
+                <p className="text-caption font-bold text-on-surface">${vgfReleased}/${vgfTotal}M</p>
                 <p className="text-[10px] text-on-surface-variant">released</p>
               </div>
             </div>

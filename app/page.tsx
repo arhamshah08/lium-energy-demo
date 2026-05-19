@@ -5,19 +5,19 @@ import { HeroCta, CtaBannerLink } from '@/components/layout/hero-cta'
 
 const FEATURES = [
   {
-    icon: 'bolt',
-    title: 'Tokenise Assets',
-    description: 'Onboard solar, wind, and grid projects with standardised documentation and on-chain registration.',
+    icon: 'solar_power',
+    title: 'List Your Commissioned Asset',
+    description: 'Once your project receives Permit to Operate, list it on LIUM. Financiers, securitisation agents, and institutional investors can discover it immediately.',
   },
   {
     icon: 'handshake',
-    title: 'Match Investors',
-    description: 'Connect with institutional capital through a compliant deal room and verified participant registry.',
+    title: 'Connect with Capital',
+    description: 'Multiple market participants — financiers, securitisation agents, portfolio managers — can discover your asset and make competitive offers.',
   },
   {
-    icon: 'rocket_launch',
-    title: 'Close Faster',
-    description: 'Automated workflows take projects from listing to fully funded in days, not months.',
+    icon: 'autorenew',
+    title: 'Retire Debt. Redeploy.',
+    description: 'Securitise the asset, retire construction debt, and recycle capital into your next project — faster than traditional structured finance.',
   },
 ]
 
@@ -39,10 +39,10 @@ export default function Home() {
           <div>
 
             <h1 className="text-display-lg text-white mb-5">
-              Real assets.<br />Global capital.
+              Build. Commission.<br />Recycle.
             </h1>
             <p className="text-body-base text-primary-fixed mb-8 max-w-md">
-              Securitise utility-scale energy projects and connect them to institutional investors — on one platform.
+              LIUM turns commissioned energy assets into structured securities — so developers retire debt and redeploy capital into their next project.
             </p>
             <HeroCta />
           </div>
@@ -98,9 +98,9 @@ export default function Home() {
       {/* ── CTA Banner ── */}
       <section className="bg-gradient-to-r from-secondary to-[#0F766E] py-16">
         <div className="max-w-container mx-auto px-margin-desktop text-center">
-          <h2 className="text-headline-md text-white mb-3">Ready to get started?</h2>
+          <h2 className="text-headline-md text-white mb-3">Start with your first asset</h2>
           <p className="text-body-base text-secondary-fixed-dim mb-8 max-w-lg mx-auto">
-            Join the growing network of developers, financiers, and investors building the next generation of energy infrastructure.
+            List a commissioned project, get discovered by institutional capital, and close your first securitisation on LIUM.
           </p>
           <CtaBannerLink />
         </div>

@@ -2,9 +2,181 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { getProjectById } from '@/lib/store'
 import { StatusBadge } from '@/components/ui/badge'
-import type { AssetType, DocumentRecord, ProjectStatus } from '@/types'
+import { VerifyButton } from '@/components/projects/verify-button'
+import { PtoUpdater } from '@/components/projects/pto-updater'
+import { PublishActions } from '@/components/projects/publish-actions'
+import { OfferInbox } from '@/components/projects/offer-inbox'
+import type { AssetType, DocumentRecord, ProjectFinancials, ProjectStatus, PtoStatus, RiskProfile } from '@/types'
 
 export const dynamic = 'force-dynamic'
+
+function RiskProfileCard({ rp }: { rp: RiskProfile }) {
+  const ringColor = rp.gate === 'PASS' ? '#006a65' : rp.gate === 'REVIEW' ? '#7b5800' : '#ba1a1a'
+  const gateColor = rp.gate === 'PASS' ? 'text-secondary' : rp.gate === 'REVIEW' ? 'text-tertiary' : 'text-error'
+  const gateBg    = rp.gate === 'PASS' ? 'bg-secondary/10' : rp.gate === 'REVIEW' ? 'bg-tertiary/10' : 'bg-error/10'
+  const components = [
+    { label: 'Availability A(t)', value: rp.availability, weight: '40%', color: 'bg-secondary' },
+    { label: 'DSCR Score D(t)',   value: rp.dscrScore,    weight: '35%', color: 'bg-primary'   },
+    { label: 'Verification V(t)', value: rp.verification, weight: '25%', color: 'bg-tertiary'  },
+  ]
+  const circumference = 2 * Math.PI * 48
+  return (
+    <div className="bg-surface-container-lowest rounded-xl border border-outline-variant/60 shadow-card overflow-hidden">
+      <div className="px-6 pt-6 pb-4 border-b border-outline-variant/40 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <span className="material-symbols-outlined text-secondary text-[20px]">monitoring</span>
+          <h2 className="text-label-caps font-bold text-on-surface tracking-widest">Risk Profile · LQ Score</h2>
+        </div>
+        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide ${gateBg} ${gateColor}`}>
+          {rp.gate}
+        </span>
+      </div>
+      <div className="p-6 flex flex-col sm:flex-row items-center gap-6">
+        <div className="relative flex items-center justify-center shrink-0">
+          <svg width="120" height="120" viewBox="0 0 120 120" className="-rotate-90">
+            <circle cx="60" cy="60" r="48" fill="none" stroke="#e7eeff" strokeWidth="10" />
+            <circle
+              cx="60" cy="60" r="48"
+              fill="none"
+              stroke={ringColor}
+              strokeWidth="10"
+              strokeDasharray={`${circumference}`}
+              strokeDashoffset={`${circumference * (1 - rp.lqComposite)}`}
+              strokeLinecap="round"
+            />
+          </svg>
+          <div className="absolute text-center">
+            <p className="text-[24px] font-bold text-on-surface leading-none">{rp.lqComposite.toFixed(3)}</p>
+            <p className="text-[9px] text-on-surface-variant font-bold uppercase tracking-wide mt-0.5">LQ Score</p>
+          </div>
+        </div>
+        <div className="flex-1 space-y-3 w-full">
+          {components.map(({ label, value, weight, color }) => (
+            <div key={label}>
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-[11px] text-on-surface-variant">{label}</p>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] text-on-surface-variant/60">{weight}</span>
+                  <span className="text-caption font-bold text-on-surface">{value.toFixed(3)}</span>
+                </div>
+              </div>
+              <div className="h-1.5 bg-outline-variant/30 rounded-full overflow-hidden">
+                <div className={`h-full ${color} rounded-full`} style={{ width: `${value * 100}%` }} />
+              </div>
+            </div>
+          ))}
+          {rp.penalty > 0 && (
+            <p className="text-[10px] text-error">Penalty δ={rp.penalty.toFixed(3)} applied</p>
+          )}
+          <p className="text-[10px] text-on-surface-variant/60 pt-1">
+            Assessed {new Date(rp.assessedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function PtoStatusCard({ projectId, ptoStatus }: { projectId: string; ptoStatus: PtoStatus }) {
+  const badgeConfig: Record<PtoStatus, { label: string; color: string; bg: string }> = {
+    PRE_PROCESSING: { label: 'Pre-Processing', color: 'text-on-surface-variant', bg: 'bg-outline-variant/30' },
+    PROCESSING:     { label: 'Processing',     color: 'text-primary',            bg: 'bg-primary/10'         },
+    APPROVED:       { label: 'Approved',        color: 'text-secondary',          bg: 'bg-secondary/10'       },
+    REJECTED:       { label: 'Rejected',        color: 'text-error',              bg: 'bg-error/10'           },
+  }
+  const descriptionMap: Record<PtoStatus, string> = {
+    PRE_PROCESSING: 'Application not yet submitted',
+    PROCESSING:     'Under regulatory review',
+    APPROVED:       'Permit granted — securitisation unlocked',
+    REJECTED:       'Permit denied',
+  }
+  const { label, color, bg } = badgeConfig[ptoStatus]
+  return (
+    <div className="bg-surface-container-lowest rounded-xl border border-outline-variant/60 shadow-card overflow-hidden">
+      <div className="px-6 pt-6 pb-4 border-b border-outline-variant/40 flex items-center gap-3">
+        <span className="material-symbols-outlined text-secondary text-[20px]">verified_user</span>
+        <h2 className="text-label-caps font-bold text-on-surface tracking-widest">Permit to Operate (PTO)</h2>
+      </div>
+      <div className="p-6 space-y-4">
+        <div className="flex items-center gap-3">
+          <span className={`text-[11px] font-bold px-3 py-1 rounded-full uppercase tracking-wide ${bg} ${color}`}>
+            {label}
+          </span>
+        </div>
+        <p className="text-caption text-on-surface-variant">{descriptionMap[ptoStatus]}</p>
+        <PtoUpdater projectId={projectId} currentStatus={ptoStatus} />
+      </div>
+    </div>
+  )
+}
+
+function FinancialsSummaryCard({ financials }: { financials: ProjectFinancials }) {
+  const hasAny = Object.values(financials).some((v) => v !== undefined && v !== null)
+  if (!hasAny) return null
+
+  const capacityParts: string[] = []
+  if (financials.capacityMW !== undefined) capacityParts.push(`${financials.capacityMW}MW`)
+  if (financials.capacityMWh !== undefined) capacityParts.push(`${financials.capacityMWh}MWh`)
+  const capacityStr = capacityParts.length > 0 ? capacityParts.join(' / ') : null
+
+  let dscrStr: string | null = null
+  if (
+    financials.annualRevenueM !== undefined &&
+    financials.annualOpexM !== undefined &&
+    financials.annualDebtServiceM !== undefined &&
+    financials.annualDebtServiceM !== 0
+  ) {
+    const dscr = (financials.annualRevenueM - financials.annualOpexM) / financials.annualDebtServiceM
+    dscrStr = `${dscr.toFixed(2)}x`
+  }
+
+  const rows: Array<{ label: string; value: string; icon: string }> = []
+
+  if (capacityStr) {
+    rows.push({ label: 'Capacity', value: capacityStr, icon: 'bolt' })
+  }
+  if (financials.totalCapexM !== undefined) {
+    rows.push({ label: 'Total CAPEX', value: `$${financials.totalCapexM}M`, icon: 'account_balance' })
+  }
+  if (financials.annualRevenueM !== undefined) {
+    rows.push({ label: 'Annual Revenue', value: `$${financials.annualRevenueM}M`, icon: 'trending_up' })
+  }
+  if (dscrStr) {
+    rows.push({ label: 'DSCR', value: dscrStr, icon: 'analytics' })
+  }
+  if (financials.ppaCounterparty) {
+    rows.push({ label: 'PPA Counterparty', value: financials.ppaCounterparty, icon: 'handshake' })
+  }
+  if (financials.codDate) {
+    rows.push({
+      label: 'COD',
+      value: new Date(financials.codDate).toLocaleDateString('en-US', {
+        year: 'numeric', month: 'short', day: 'numeric',
+      }),
+      icon: 'event_available',
+    })
+  }
+
+  if (rows.length === 0) return null
+
+  return (
+    <div className="bg-surface-container-lowest rounded-xl border border-outline-variant/60 shadow-card">
+      <div className="px-6 pt-6 pb-4 border-b border-outline-variant/40 flex items-center gap-3">
+        <span className="material-symbols-outlined text-secondary text-[20px]">payments</span>
+        <h2 className="text-label-caps font-bold text-on-surface tracking-widest">Financials</h2>
+      </div>
+      <dl className="divide-y divide-outline-variant/30">
+        {rows.map(({ label, value, icon }) => (
+          <div key={label} className="flex items-center gap-4 px-6 py-3.5">
+            <span className="material-symbols-outlined text-outline text-[16px] shrink-0">{icon}</span>
+            <dt className="text-caption text-on-surface-variant w-32 shrink-0">{label}</dt>
+            <dd className="text-caption text-on-surface font-medium">{value}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  )
+}
 
 const ASSET_META: Record<AssetType, { label: string; icon: string }> = {
   BESS:              { label: 'Battery Energy Storage System', icon: 'battery_charging_full' },
@@ -25,9 +197,9 @@ const DOC_LABELS: Record<DocumentRecord['type'], string> = {
 }
 
 function nextOnboardHref(status: ProjectStatus, id: string): string | null {
-  if (status === 'DRAFT')              return `/onboard/document-vault?id=${id}`
-  if (status === 'DOCUMENTS_PENDING')  return `/onboard/telemetry?id=${id}`
-  if (status === 'TELEMETRY_PENDING')  return `/onboard/telemetry?id=${id}`
+  if (status === 'DRAFT')             return `/onboard/document-vault?id=${id}`
+  if (status === 'DOCUMENTS_PENDING') return `/onboard/telemetry?id=${id}`
+  if (status === 'TELEMETRY_PENDING') return `/onboard/telemetry?id=${id}`
   return null
 }
 
@@ -36,6 +208,12 @@ function nextOnboardLabel(status: ProjectStatus): string {
   if (status === 'DOCUMENTS_PENDING') return 'Connect Telemetry'
   return 'Verify Telemetry'
 }
+
+const OFFER_INBOX_STATUSES: ProjectStatus[] = [
+  'PUBLISHED_FOR_FINANCE',
+  'OFFER_RECEIVED',
+  'FINANCING_ACCEPTED',
+]
 
 export default async function ProjectDetailPage({
   params,
@@ -53,18 +231,27 @@ export default async function ProjectDetailPage({
   const { label: assetLabel, icon: assetIcon } = ASSET_META[project.assetType]
   const continueHref = nextOnboardHref(project.status, id)
   const isSubmitted = project.status === 'SUBMITTED'
+  const showOfferInbox = OFFER_INBOX_STATUSES.includes(project.status)
+  const ptoStatus: PtoStatus = project.ptoStatus ?? 'PRE_PROCESSING'
 
   return (
     <div className="py-gutter space-y-8 max-w-5xl">
 
-      {/* Breadcrumb */}
-      <nav className="flex items-center gap-2 text-caption text-on-surface-variant">
-        <Link href="/projects" className="hover:text-on-surface transition-colors">Asset Registry</Link>
-        <span className="material-symbols-outlined text-[14px]">chevron_right</span>
-        <span className="text-on-surface font-medium truncate">{project.name}</span>
+      <nav className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-2 text-caption text-on-surface-variant">
+          <Link href="/projects" className="hover:text-on-surface transition-colors">Asset Registry</Link>
+          <span className="material-symbols-outlined text-[14px]">chevron_right</span>
+          <span className="text-on-surface font-medium truncate">{project.name}</span>
+        </div>
+        <Link
+          href={`/projects/${id}/risco`}
+          className="inline-flex items-center gap-1.5 text-label-caps text-secondary border border-secondary/30 bg-secondary/5 px-3 py-1.5 rounded-lg hover:bg-secondary/10 transition-all text-[10px] font-bold uppercase tracking-wide shrink-0"
+        >
+          <span className="material-symbols-outlined text-[14px]">monitoring</span>
+          View RISCO
+        </Link>
       </nav>
 
-      {/* Success banner */}
       {isNew && (
         <div className="flex items-start gap-4 p-5 bg-secondary-container/30 border border-secondary/20 rounded-xl">
           <span
@@ -88,7 +275,6 @@ export default async function ProjectDetailPage({
         </div>
       )}
 
-      {/* Hero header */}
       <div className="flex items-start gap-5">
         <div className="w-16 h-16 rounded-xl bg-secondary-container/40 flex items-center justify-center flex-shrink-0">
           <span className="material-symbols-outlined text-[32px] text-secondary">{assetIcon}</span>
@@ -100,24 +286,26 @@ export default async function ProjectDetailPage({
           </div>
           <p className="text-body-base text-on-surface-variant">{assetLabel} · {project.jurisdiction}</p>
         </div>
-        {continueHref && (
-          <Link
-            href={continueHref}
-            className="inline-flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-lg text-label-caps font-bold hover:opacity-90 transition-all shadow-sm shrink-0"
-          >
-            {nextOnboardLabel(project.status)}
-            <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-          </Link>
-        )}
+        <div className="flex items-center gap-3 shrink-0 flex-wrap justify-end">
+          {project.status === 'TELEMETRY_PENDING' ? (
+            <VerifyButton projectId={id} />
+          ) : continueHref ? (
+            <Link
+              href={continueHref}
+              className="inline-flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-lg text-label-caps font-bold hover:opacity-90 transition-all shadow-sm"
+            >
+              {nextOnboardLabel(project.status)}
+              <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+            </Link>
+          ) : null}
+          <PublishActions projectId={id} status={project.status} ptoStatus={ptoStatus} />
+        </div>
       </div>
 
-      {/* Two-column layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-        {/* ── Left column ── */}
         <div className="space-y-6">
 
-          {/* Project overview */}
           <div className="bg-surface-container-lowest rounded-xl border border-outline-variant/60 shadow-card">
             <div className="px-6 pt-6 pb-4 border-b border-outline-variant/40 flex items-center gap-3">
               <span className="material-symbols-outlined text-secondary text-[20px]">info</span>
@@ -125,9 +313,9 @@ export default async function ProjectDetailPage({
             </div>
             <dl className="divide-y divide-outline-variant/30">
               {[
-                { label: 'Asset Type',    value: assetLabel,         icon: assetIcon },
-                { label: 'Jurisdiction',  value: project.jurisdiction, icon: 'lan' },
-                { label: 'Location',      value: project.location || '—', icon: 'location_on' },
+                { label: 'Asset Type',    value: assetLabel,              icon: assetIcon         },
+                { label: 'Jurisdiction',  value: project.jurisdiction,    icon: 'lan'             },
+                { label: 'Location',      value: project.location || '—', icon: 'location_on'     },
                 {
                   label: 'Created',
                   value: new Date(project.createdAt).toLocaleDateString('en-US', {
@@ -152,7 +340,10 @@ export default async function ProjectDetailPage({
             </dl>
           </div>
 
-          {/* Telemetry */}
+          {project.financials && (
+            <FinancialsSummaryCard financials={project.financials} />
+          )}
+
           <div className="bg-surface-container-lowest rounded-xl border border-outline-variant/60 shadow-card">
             <div className="px-6 pt-6 pb-4 border-b border-outline-variant/40 flex items-center gap-3">
               <span className="material-symbols-outlined text-secondary text-[20px]">sensors</span>
@@ -199,10 +390,8 @@ export default async function ProjectDetailPage({
           </div>
         </div>
 
-        {/* ── Right column ── */}
         <div className="space-y-6">
 
-          {/* Documents */}
           <div className="bg-surface-container-lowest rounded-xl border border-outline-variant/60 shadow-card">
             <div className="px-6 pt-6 pb-4 border-b border-outline-variant/40 flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -251,7 +440,12 @@ export default async function ProjectDetailPage({
             )}
           </div>
 
-          {/* Submitted state */}
+          {project.telemetry?.riskProfile && (
+            <RiskProfileCard rp={project.telemetry.riskProfile} />
+          )}
+
+          <PtoStatusCard projectId={id} ptoStatus={ptoStatus} />
+
           {isSubmitted && (
             <div className="bg-secondary-container/20 rounded-xl border border-secondary/20 p-6 flex flex-col items-center text-center">
               <span
@@ -267,7 +461,6 @@ export default async function ProjectDetailPage({
             </div>
           )}
 
-          {/* Onboarding progress (non-submitted) */}
           {!isSubmitted && (
             <div className="bg-surface-container-lowest rounded-xl border border-outline-variant/60 shadow-card">
               <div className="px-6 pt-6 pb-4 border-b border-outline-variant/40 flex items-center gap-3">
@@ -276,9 +469,9 @@ export default async function ProjectDetailPage({
               </div>
               <div className="p-6 space-y-4">
                 {[
-                  { step: 1, label: 'Project Details',   done: true },
-                  { step: 2, label: 'Document Vault',    done: project.status !== 'DRAFT' },
-                  { step: 3, label: 'Telemetry Link',    done: project.status === 'SUBMITTED' },
+                  { step: 1, label: 'Project Details', done: true },
+                  { step: 2, label: 'Document Vault',  done: project.status !== 'DRAFT' },
+                  { step: 3, label: 'Telemetry Link',  done: project.status === 'SUBMITTED' },
                 ].map(({ step, label, done }) => (
                   <div key={step} className="flex items-center gap-3">
                     <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${
@@ -295,7 +488,13 @@ export default async function ProjectDetailPage({
                   </div>
                 ))}
               </div>
-              {continueHref && (
+              {project.status === 'TELEMETRY_PENDING' ? (
+                <div className="px-6 pb-6">
+                  <div className="flex w-full items-center justify-center">
+                    <VerifyButton projectId={id} />
+                  </div>
+                </div>
+              ) : continueHref ? (
                 <div className="px-6 pb-6">
                   <Link
                     href={continueHref}
@@ -305,11 +504,15 @@ export default async function ProjectDetailPage({
                     <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
                   </Link>
                 </div>
-              )}
+              ) : null}
             </div>
           )}
         </div>
       </div>
+
+      {showOfferInbox && (
+        <OfferInbox projectId={id} projectStatus={project.status} />
+      )}
     </div>
   )
 }

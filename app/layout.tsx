@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { DM_Sans } from 'next/font/google'
 import { AuthProvider } from '@/components/auth/auth-context'
+import { DevActorSwitcher } from '@/components/dev/actor-switcher'
 import './globals.css'
 
 const dmSans = DM_Sans({
@@ -25,7 +26,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className="bg-background text-on-background antialiased min-h-screen" style={{ fontFamily: 'var(--font-public-sans), sans-serif' }}>
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          {children}
+          <DevActorSwitcher />
+        </AuthProvider>
       </body>
     </html>
   )

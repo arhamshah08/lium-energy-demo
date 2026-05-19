@@ -50,7 +50,7 @@ export default async function SecuritiesPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
           { label: 'Total Pools',     value: pools.length,             icon: 'hub',          accent: '' },
-          { label: 'AUM (₹ Mn)',     value: `${totalAUM.toLocaleString()}`, icon: 'payments',    accent: 'text-secondary' },
+          { label: 'AUM ($M)',       value: `$${totalAUM.toLocaleString()}`, icon: 'payments',    accent: 'text-secondary' },
           { label: 'Listed',          value: listed,                   icon: 'storefront',   accent: 'text-secondary' },
           { label: 'Avg DSCR',        value: `${avgDSCR.toFixed(2)}x`, icon: 'waterfall_chart', accent: 'text-primary' },
         ].map(({ label, value, icon, accent }) => (
@@ -110,7 +110,7 @@ export default async function SecuritiesPage() {
                     </p>
                   </div>
                   <div className="text-right shrink-0 hidden md:block">
-                    <p className="text-data-point font-bold text-on-surface">₹{pool.totalSizeINR.toLocaleString()} Mn</p>
+                    <p className="text-data-point font-bold text-on-surface">${pool.totalSizeINR.toLocaleString()}M</p>
                     <p className="text-label-caps text-on-surface-variant">POOL SIZE</p>
                   </div>
                   <span className="material-symbols-outlined text-outline text-[20px] shrink-0">chevron_right</span>
@@ -124,7 +124,7 @@ export default async function SecuritiesPage() {
                         key={t.id}
                         className={`${TRANCHE_COLORS[t.class] ?? 'bg-outline'} flex items-center justify-center`}
                         style={{ width: `${(t.sizeINR / pool.totalSizeINR) * 100}%` }}
-                        title={`${t.class} ₹${t.sizeINR} Mn @ ${t.coupon}%`}
+                        title={`${t.class} $${t.sizeINR}M @ ${t.coupon}%`}
                       >
                         <span className="text-[9px] font-bold text-white">{t.rating}</span>
                       </div>

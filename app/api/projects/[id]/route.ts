@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getProjectById, updateProject } from '@/lib/db'
 import { getUserFromHeader, dbToProject } from '@/lib/project-helpers'
-import type { ApiResponse, Project, ProjectStatus } from '@/types'
+import type { ApiResponse, Project, ProjectStatus, TelemetryConfig } from '@/types'
 
 export async function GET(
   req: NextRequest,
@@ -38,7 +38,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse<ApiResponse<Project>>> {
   const { id } = await params
-  const body: { status?: ProjectStatus } = await req.json()
+  const body: { status?: ProjectStatus; telemetry?: Partial<TelemetryConfig> } = await req.json()
 
   const row = await getProjectById(id)
   if (!row) {
@@ -48,8 +48,17 @@ export async function PATCH(
     )
   }
 
+  let mergedTelemetry: unknown = undefined
+  if (body.telemetry) {
+    const existing = row.telemetry
+      ? (typeof row.telemetry === 'string' ? JSON.parse(row.telemetry) : row.telemetry) as TelemetryConfig
+      : {}
+    mergedTelemetry = { ...existing, ...body.telemetry }
+  }
+
   const updated = await updateProject(id, {
     status: body.status ?? row.status,
+    ...(mergedTelemetry !== undefined ? { telemetry: mergedTelemetry } : {}),
     updated_at: new Date().toISOString(),
   })
 

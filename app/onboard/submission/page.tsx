@@ -1,52 +1,72 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Stepper } from '@/components/onboard/stepper'
-import type { Token } from '@/types'
-
-const SUMMARY_ROWS = [
-  { label: 'Asset',             value: 'Permian Basin BESS — Ector County Substation', icon: 'battery_charging_full' },
-  { label: 'Capacity',          value: '100 MW / 200 MWh (2-hour duration)', icon: 'bolt' },
-  { label: 'Location',          value: 'Ector County, Texas, USA', icon: 'location_on' },
-  { label: 'Telemetry',         value: 'IEEE 2030.5 · Latency 8ms · Verified', icon: 'sensors' },
-  { label: 'Capacity Revenue',  value: '$28.35M/year (Luminant BBB–)', icon: 'receipt_long' },
-  { label: 'Token Nominal',     value: '$131.25M (75% LTV)',          icon: 'token' },
-  { label: 'Token ID',          value: 'UNITS-US-BESS-2024-003',      icon: 'tag' },
-  { label: 'LQ Score',          value: '0.944 (Gate: PASS)',           icon: 'monitoring' },
-  { label: 'Pool',              value: 'LIUM Pool 2026-01',           icon: 'hub' },
-]
+import { useAuth } from '@/components/auth/auth-context'
+import type { Token, Project } from '@/types'
 
 const TRANCHE_PREVIEW = [
-  { class: 'SENIOR',     rating: 'AAA',  size: 59,  coupon: 8.5,  tenor: 12, color: 'bg-secondary' },
-  { class: 'MEZZANINE',  rating: 'BBB',  size: 43,  coupon: 11.0, tenor: 10, color: 'bg-primary' },
-  { class: 'JUNIOR',     rating: 'BB',   size: 29,  coupon: 14.0, tenor: 8,  color: 'bg-tertiary' },
+  { class: 'SENIOR',     rating: 'AAA',  pct: 45,  coupon: 8.5,  tenor: 12, color: 'bg-secondary' },
+  { class: 'MEZZANINE',  rating: 'BBB',  pct: 33,  coupon: 11.0, tenor: 10, color: 'bg-primary' },
+  { class: 'JUNIOR',     rating: 'BB',   pct: 22,  coupon: 14.0, tenor: 8,  color: 'bg-tertiary' },
 ]
 
 export default function SubmissionPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
+  const { token: authToken } = useAuth()
   const id = searchParams.get('id') ?? ''
 
+  const [project, setProject] = useState<Project | null>(null)
   const [issuing, setIssuing] = useState(false)
   const [issued, setIssued] = useState(false)
   const [issuedToken, setIssuedToken] = useState<Token | null>(null)
   const [error, setError] = useState<string | null>(null)
 
+  useEffect(() => {
+    if (!id || !authToken) return
+    fetch(`/api/projects/${id}`, {
+      headers: { 'Authorization': `Bearer ${authToken}` },
+    })
+      .then(r => r.json())
+      .then(json => { if (json.ok) setProject(json.data) })
+      .catch(() => {})
+  }, [id, authToken])
+
+  const nominalValue = 45
+
+  const summaryRows = project
+    ? [
+        { label: 'Asset',    value: project.name,                        icon: 'battery_charging_full' },
+        { label: 'Location', value: project.location,                    icon: 'location_on' },
+        { label: 'Type',     value: project.assetType?.replace(/_/g, ' ') ?? '—', icon: 'bolt' },
+        { label: 'Network',  value: project.jurisdiction ?? '—',         icon: 'hub' },
+        { label: 'Telemetry',value: project.telemetry?.verified ? `${project.telemetry.connectionMethod} · Verified` : 'Not verified', icon: 'sensors' },
+        { label: 'Token Nominal', value: `$${nominalValue}M (75% LTV)`, icon: 'token' },
+        { label: 'LQ Score', value: '0.944 (Gate: PASS)',                icon: 'monitoring' },
+      ]
+    : [
+        { label: 'Asset',         value: 'Loading…', icon: 'battery_charging_full' },
+        { label: 'Token Nominal', value: `$${nominalValue}M (75% LTV)`, icon: 'token' },
+        { label: 'LQ Score',      value: '0.944 (Gate: PASS)', icon: 'monitoring' },
+      ]
+
   async function handleIssue() {
     setIssuing(true)
     setError(null)
-
     try {
-      // Issue the UNITS token
       const res = await fetch('/api/tokens', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`,
+        },
         body: JSON.stringify({
-          projectId: id || 'project-permian-bess-001',
-          nominalValueINR: 131,
-          issuedTo: 'LIUM Pool 2026-01',
+          projectId: id || 'dev-proj-menlo-001',
+          nominalValueINR: nominalValue,
+          issuedTo: project?.name ?? 'LIUM Pool',
         }),
       })
 
@@ -56,11 +76,13 @@ export default function SubmissionPage() {
       const token: Token = json.data
       setIssuedToken(token)
 
-      // Update project status to TOKENISED if we have a project ID
       if (id) {
         await fetch(`/api/projects/${id}`, {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`,
+          },
           body: JSON.stringify({ status: 'TOKENISED' }),
         })
       }
@@ -96,7 +118,7 @@ export default function SubmissionPage() {
               { label: 'Tx Hash',       value: issuedToken.operations[0]?.txHash ?? '—' },
               { label: 'Operation',     value: 'ISSUE' },
               { label: 'Nominal Value', value: `$${issuedToken.nominalValueINR.toLocaleString()}M` },
-              { label: 'Pool',          value: issuedToken.issuedTo },
+              { label: 'Issued To',     value: issuedToken.issuedTo },
               { label: 'Status',        value: 'CONFIRMED' },
             ].map(({ label, value }) => (
               <div key={label} className="flex items-center gap-4 px-6 py-3.5">
@@ -133,6 +155,7 @@ export default function SubmissionPage() {
     )
   }
 
+  const totalSize = nominalValue
   return (
     <div className="py-gutter space-y-8 max-w-5xl">
       <Stepper currentStep={5} projectId={id} />
@@ -152,7 +175,7 @@ export default function SubmissionPage() {
             <h2 className="text-label-caps font-bold text-on-surface tracking-widest">Asset Summary</h2>
           </div>
           <dl className="divide-y divide-outline-variant/20">
-            {SUMMARY_ROWS.map(({ label, value, icon }) => (
+            {summaryRows.map(({ label, value, icon }) => (
               <div key={label} className="flex items-center gap-4 px-6 py-3">
                 <span className="material-symbols-outlined text-outline text-[16px] shrink-0">{icon}</span>
                 <dt className="text-caption text-on-surface-variant w-32 shrink-0">{label}</dt>
@@ -169,15 +192,14 @@ export default function SubmissionPage() {
               <span className="material-symbols-outlined text-secondary text-[20px]">stacked_bar_chart</span>
               <h2 className="text-label-caps font-bold text-on-surface tracking-widest">Tranche Structure</h2>
             </div>
-            {/* Stacked bar */}
             <div className="px-6 py-4">
               <div className="flex h-8 rounded-lg overflow-hidden mb-4">
                 {TRANCHE_PREVIEW.map(t => (
                   <div
                     key={t.class}
                     className={`${t.color} flex items-center justify-center`}
-                    style={{ width: `${(t.size / 131) * 100}%` }}
-                    title={`${t.class} $${t.size}M`}
+                    style={{ width: `${t.pct}%` }}
+                    title={`${t.class} ${t.pct}%`}
                   >
                     <span className="text-[10px] font-bold text-white">{t.rating}</span>
                   </div>
@@ -193,7 +215,9 @@ export default function SubmissionPage() {
                         <span className="text-caption text-on-surface-variant ml-2">{t.rating}</span>
                       </div>
                       <div className="text-right">
-                        <span className="text-caption font-bold text-on-surface">${t.size}M</span>
+                        <span className="text-caption font-bold text-on-surface">
+                          ${Math.round((t.pct / 100) * totalSize)}M
+                        </span>
                         <span className="text-caption text-on-surface-variant ml-2">{t.coupon}% / {t.tenor}yr</span>
                       </div>
                     </div>
@@ -218,10 +242,10 @@ export default function SubmissionPage() {
 
             <div className="bg-surface-container-lowest rounded-xl divide-y divide-outline-variant/20 text-sm">
               {[
-                ['Token ID',   'UNITS-US-BESS-2024-003'],
+                ['Asset',      project?.name ?? 'Loading…'],
                 ['Operation',  'ISSUE'],
-                ['Amount',     '$131.25M (USD)'],
-                ['Recipient',  'LIUM Pool 2026-01'],
+                ['Amount',     `$${nominalValue}M (USD)`],
+                ['Recipient',  project?.name ?? 'LIUM Pool'],
                 ['Network',    'LIUM Finternet v1'],
               ].map(([k, v]) => (
                 <div key={k} className="flex items-center gap-3 px-4 py-2.5">
@@ -240,7 +264,7 @@ export default function SubmissionPage() {
 
             <button
               onClick={handleIssue}
-              disabled={issuing}
+              disabled={issuing || !authToken}
               className="w-full flex items-center justify-center gap-2 bg-primary text-on-primary py-3.5 rounded-xl text-label-caps font-bold hover:opacity-90 transition-all shadow-sm disabled:opacity-70"
             >
               {issuing ? (
@@ -259,7 +283,6 @@ export default function SubmissionPage() {
         </div>
       </div>
 
-      {/* Nav */}
       <div className="flex items-center justify-between pt-2 border-t border-outline-variant/30">
         <Link
           href={`/onboard/credit-pack${id ? `?id=${id}` : ''}`}

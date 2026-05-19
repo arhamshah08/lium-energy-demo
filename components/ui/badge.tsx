@@ -2,11 +2,18 @@ import { cn } from '@/lib/utils'
 import type { ProjectStatus } from '@/types'
 
 const STATUS_CONFIG: Record<ProjectStatus, { label: string; classes: string }> = {
-  DRAFT:              { label: 'Draft',               classes: 'bg-surface-container-high text-on-surface-variant' },
-  DOCUMENTS_PENDING:  { label: 'Docs Pending',        classes: 'bg-tertiary-fixed text-on-tertiary-fixed-variant' },
-  TELEMETRY_PENDING:  { label: 'Telemetry Pending',   classes: 'bg-primary-fixed text-on-primary-fixed-variant' },
-  SUBMITTED:          { label: 'Submitted',           classes: 'bg-secondary-container text-on-secondary-container' },
-  TOKENISED:          { label: 'Tokenised',           classes: 'bg-primary-container text-on-primary-container' },
+  DRAFT:              { label: 'Draft',        classes: 'bg-surface-container-high text-on-surface-variant' },
+  COMING_SOON:        { label: 'Coming Soon',  classes: 'bg-tertiary/10 text-tertiary' },
+  DOCUMENTS_PENDING:  { label: 'Docs Pending', classes: 'bg-tertiary-fixed text-on-tertiary-fixed-variant' },
+  TELEMETRY_PENDING:  { label: 'Telemetry',    classes: 'bg-primary-fixed text-on-primary-fixed-variant' },
+  SUBMITTED:              { label: 'PTO · Active',      classes: 'bg-secondary-container text-on-secondary-container' },
+  ACTIVE:                 { label: 'PTO · Active',      classes: 'bg-secondary-container text-on-secondary-container' },
+  PUBLISHED_FOR_FINANCE:  { label: 'Open for Finance',  classes: 'bg-secondary/10 text-secondary' },
+  OFFER_RECEIVED:         { label: 'Offer Received',    classes: 'bg-tertiary/10 text-tertiary' },
+  FINANCING_ACCEPTED:     { label: 'Financed',          classes: 'bg-primary/10 text-primary font-bold' },
+  PUBLISHED_FOR_SA:       { label: 'Sent to SA',        classes: 'bg-primary-container text-on-primary-container' },
+  TRANSACTING:            { label: 'Transacting',       classes: 'bg-primary/10 text-primary' },
+  TOKENISED:              { label: 'Tokenised',         classes: 'bg-primary-container text-on-primary-container' },
 }
 
 const FALLBACK_CONFIG = {
