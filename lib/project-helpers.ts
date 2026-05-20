@@ -39,9 +39,21 @@ export function dbToProject(row: Record<string, unknown> | object): Project {
     annualRevenueM: r.annual_revenue_m as number | undefined,
     annualOpexM: r.annual_opex_m as number | undefined,
     annualDebtServiceM: r.annual_debt_service_m as number | undefined,
+    quarterlyFundingAskM: r.quarterly_funding_ask_m as number | undefined,
     gapFundingEligible: (r.gap_funding_eligible as boolean) ?? false,
     gapFundingProgram: r.gap_funding_program as string | undefined,
-    assetDetails: parseJson<Record<string, unknown>>(r.asset_details),
+    ...(() => {
+      const ad = parseJson<Record<string, unknown>>(r.asset_details)
+      return {
+        assetDetails: ad,
+        assetMake: ad?.make as string | undefined,
+        assetModel: ad?.model as string | undefined,
+        assetUnitCount: ad?.unitCount as number | undefined,
+        constructionStartDate: ad?.constructionStartDate as string | undefined,
+        ptoDate: ad?.ptoDate as string | undefined,
+        fundingSchedule: ad?.fundingSchedule as import('@/types').FundingScheduleRow[] | undefined,
+      }
+    })(),
   }
   const hasFinancials = Object.values(financials).some(v => v !== undefined && v !== false)
 

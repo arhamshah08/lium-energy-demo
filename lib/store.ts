@@ -17,6 +17,7 @@ function dbToProject(row: DbProject): Project {
     annualRevenueM: row.annual_revenue_m ?? undefined,
     annualOpexM: row.annual_opex_m ?? undefined,
     annualDebtServiceM: row.annual_debt_service_m ?? undefined,
+    quarterlyFundingAskM: row.quarterly_funding_ask_m ?? undefined,
     gapFundingEligible: row.gap_funding_eligible,
     gapFundingProgram: row.gap_funding_program ?? undefined,
     assetDetails: row.asset_details

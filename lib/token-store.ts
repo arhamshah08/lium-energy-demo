@@ -14,13 +14,17 @@ import type {
 // ─────────────────────────────────────────
 
 export async function listTokens(): Promise<Token[]> {
-  const { data, error } = await supabase
-    .from('tokens')
-    .select('*')
-    .order('created_at', { ascending: false })
+  try {
+    const { data, error } = await supabase
+      .from('tokens')
+      .select('*')
+      .order('created_at', { ascending: false })
 
-  if (error) throw new Error(error.message)
-  return (data ?? []).map((row) => row.data as Token)
+    if (error) return []
+    return (data ?? []).map((row) => row.data as Token)
+  } catch {
+    return []
+  }
 }
 
 export async function getToken(id: string): Promise<Token | undefined> {
@@ -61,13 +65,17 @@ export async function upsertToken(token: Token): Promise<void> {
 // ─────────────────────────────────────────
 
 export async function listPools(): Promise<Pool[]> {
-  const { data, error } = await supabase
-    .from('pools')
-    .select('*')
-    .order('created_at', { ascending: false })
+  try {
+    const { data, error } = await supabase
+      .from('pools')
+      .select('*')
+      .order('created_at', { ascending: false })
 
-  if (error) throw new Error(error.message)
-  return (data ?? []).map((row) => row.data as Pool)
+    if (error) return []
+    return (data ?? []).map((row) => row.data as Pool)
+  } catch {
+    return []
+  }
 }
 
 export async function getPool(id: string): Promise<Pool | undefined> {

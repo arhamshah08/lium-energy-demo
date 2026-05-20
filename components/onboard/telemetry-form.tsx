@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useAuth } from '@/components/auth/auth-context'
 import { projectsApi } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -17,6 +18,8 @@ const CONNECTION_METHODS: { value: ConnectionMethod; label: string; subtitle: st
 
 export function TelemetryForm({ projectId }: { projectId: string }) {
   const router = useRouter()
+  const { token } = useAuth()
+  const [isOperational, setIsOperational] = useState<boolean | null>(null)
   const [method, setMethod] = useState<ConnectionMethod>('DIRECT_API')
   const [endpoint, setEndpoint] = useState('')
   const [assetId, setAssetId] = useState('')
@@ -26,6 +29,21 @@ export function TelemetryForm({ projectId }: { projectId: string }) {
   const [testing, setTesting] = useState(false)
   const [testResult, setTestResult] = useState<TelemetryTestResult | null>(null)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    if (!projectId || !token) return
+    fetch(`/api/projects/${projectId}`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json())
+      .then(json => {
+        if (json.ok) {
+          const ad = json.data?.financials?.assetDetails
+          setIsOperational(ad?.isOperational !== false)
+        } else {
+          setIsOperational(true)
+        }
+      })
+      .catch(() => setIsOperational(true))
+  }, [projectId, token])
 
   async function saveConfig() {
     if (!endpoint.trim()) { setError('API endpoint is required'); return null }
@@ -56,6 +74,65 @@ export function TelemetryForm({ projectId }: { projectId: string }) {
     e.preventDefault()
     if (!testResult?.success) { setError('Test the connection before proceeding'); return }
     router.push(`/onboard/credit-pack?id=${projectId}`)
+  }
+
+  if (isOperational === null) {
+    return (
+      <Card>
+        <CardBody>
+          <div className="flex items-center gap-3 py-4">
+            <span className="material-symbols-outlined text-outline animate-spin">progress_activity</span>
+            <p className="text-caption text-on-surface-variant">Loading project…</p>
+          </div>
+        </CardBody>
+      </Card>
+    )
+  }
+
+  if (!isOperational) {
+    return (
+      <Card>
+        <CardBody className="space-y-5">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-tertiary-container/40 flex items-center justify-center shrink-0">
+              <span className="material-symbols-outlined text-tertiary text-[24px]">construction</span>
+            </div>
+            <div>
+              <h3 className="text-headline-md text-on-surface">Pre-commissioning Project</h3>
+              <p className="text-caption text-on-surface-variant mt-0.5">Telemetry connection is not required until the asset is operational</p>
+            </div>
+          </div>
+
+          <div className="bg-tertiary/5 border border-tertiary/20 rounded-xl px-5 py-4">
+            <p className="text-caption text-on-surface">
+              You marked this project as <span className="font-bold">pre-commissioning</span> in Step 1.
+              Telemetry can be connected after commissioning — skip this step and return later from your project dashboard.
+            </p>
+          </div>
+
+          <div className="flex items-center justify-between pt-2">
+            <Button
+              type="button"
+              variant="ghost"
+              className="gap-2"
+              onClick={() => router.push(`/onboard/document-vault?id=${projectId}`)}
+            >
+              <span className="material-symbols-outlined text-[16px]">arrow_back</span>
+              Back to Document Vault
+            </Button>
+            <Button
+              type="button"
+              variant="primary"
+              className="gap-2"
+              onClick={() => router.push(`/onboard/credit-pack?id=${projectId}`)}
+            >
+              Skip to Credit Pack
+              <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+            </Button>
+          </div>
+        </CardBody>
+      </Card>
+    )
   }
 
   return (

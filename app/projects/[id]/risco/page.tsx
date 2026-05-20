@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { getProjectById } from '@/lib/store'
+import { RiskProviderPanel } from '@/components/projects/risk-provider-panel'
 import type { DocumentRecord, Project, ProjectFinancials, RiskProfile } from '@/types'
 
 export const dynamic = 'force-dynamic'
@@ -60,7 +61,7 @@ function deriveGates(project: Project): Gate[] {
       icon: 'receipt_long',
       status: fin.ppaCounterparty && fin.annualRevenueM != null ? 'PASS' : fin.annualRevenueM != null ? 'REVIEW' : 'PENDING',
       metric: fin.ppaCounterparty
-        ? `PPA with ${fin.ppaCounterparty}${fin.ppaTariffMwh != null ? ` @ $${fin.ppaTariffMwh}/MWh` : ''} · $${fin.annualRevenueM ?? '—'}M/yr contracted`
+        ? `PPA with ${fin.ppaCounterparty}${fin.ppaTariffMwh != null ? ` @ $${fin.ppaTariffMwh}/MWh/month` : ''} · $${fin.annualRevenueM ?? '—'}M/yr contracted`
         : fin.annualRevenueM != null
           ? `$${fin.annualRevenueM}M annual revenue — PPA counterparty not specified`
           : 'No revenue contract data',
@@ -341,7 +342,7 @@ export default async function RiscoPage({
                 ['Annual OPEX',       project.financials.annualOpexM != null ? `$${project.financials.annualOpexM}M` : null,                    'build'],
                 ['Annual Debt Svc',   project.financials.annualDebtServiceM != null ? `$${project.financials.annualDebtServiceM}M` : null,      'credit_card'],
                 ['PPA Counterparty',  project.financials.ppaCounterparty ?? null,                                                               'handshake'],
-                ['PPA Tariff',        project.financials.ppaTariffMwh != null ? `$${project.financials.ppaTariffMwh}/MWh` : null,              'receipt_long'],
+                ['PPA Tariff',        project.financials.ppaTariffMwh != null ? `$${project.financials.ppaTariffMwh}/MWh/month` : null,  'receipt_long'],
                 ['Gap Funding',       project.financials.gapFundingEligible ? (project.financials.gapFundingProgram ?? 'Eligible') : null,      'savings'],
               ] as [string, string | null, string][]
             )
@@ -356,6 +357,13 @@ export default async function RiscoPage({
           </dl>
         </div>
       )}
+
+      {/* External risk assessment */}
+      <RiskProviderPanel
+        projectId={id}
+        existingRequest={project.telemetry?.externalRiskRequest}
+        hasInternalScore={!!rp}
+      />
 
       {/* Generated at */}
       <p className="text-[10px] text-on-surface-variant/50 text-center">

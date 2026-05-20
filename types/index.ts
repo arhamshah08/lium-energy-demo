@@ -21,7 +21,18 @@ export type ProjectStatus =
 export type OfferStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'REVISION_REQUESTED' | 'EXPIRED' | 'WITHDRAWN'
 export type InterestRateType = 'FIXED' | 'FLOATING'
 
+export interface FundingScheduleRow {
+  quarter: string   // e.g. "Q1 2026"
+  amountM: number
+}
+
 export interface ProjectFinancials {
+  assetMake?: string
+  assetModel?: string
+  assetUnitCount?: number
+  constructionStartDate?: string
+  ptoDate?: string
+  fundingSchedule?: FundingScheduleRow[]
   capacityMW?: number
   capacityMWh?: number
   codDate?: string
@@ -35,6 +46,7 @@ export interface ProjectFinancials {
   annualRevenueM?: number
   annualOpexM?: number
   annualDebtServiceM?: number
+  quarterlyFundingAskM?: number
   gapFundingEligible?: boolean
   gapFundingProgram?: string
   assetDetails?: Record<string, unknown>
@@ -87,6 +99,15 @@ export interface RiskProfile {
   assessedAt: string
 }
 
+export interface ExternalRiskRequest {
+  provider: string
+  status: 'PENDING' | 'RECEIVED'
+  requestedAt: string
+  externalScore?: number
+  externalGate?: 'PASS' | 'REVIEW' | 'FAIL'
+  assessedAt?: string
+}
+
 export interface TelemetryConfig {
   connectionMethod: ConnectionMethod
   apiEndpoint: string
@@ -94,6 +115,7 @@ export interface TelemetryConfig {
   verified: boolean
   verifiedAt?: string
   riskProfile?: RiskProfile
+  externalRiskRequest?: ExternalRiskRequest
   dscrProjection?: DSCRYear[]
   qualificationGates?: SavedQualificationGate[]
 }
@@ -199,7 +221,14 @@ export interface Token {
 export type TrancheClass = 'SENIOR' | 'MEZZANINE' | 'JUNIOR' | 'EQUITY'
 export type TrancheRating = 'AAA' | 'AA+' | 'AA' | 'A+' | 'A' | 'BBB' | 'BB' | 'B' | 'NR'
 export type TrancheStatus = 'OPEN' | 'SUBSCRIBED' | 'CLOSED' | 'REDEEMED'
-export type PoolStatus = 'STRUCTURING' | 'RATED' | 'LISTED' | 'CLOSED' | 'REDEEMED'
+export type PoolStatus = 'STRUCTURING' | 'RATED' | 'LISTED' | 'CLOSED' | 'REDEEMED' | 'REQUESTED' | 'PM_APPROVED'
+
+export interface PmAllocation {
+  tokenId: string
+  projectId: string
+  projectName: string
+  pct: number
+}
 export type InvestorType = 'PENSION_FUND' | 'INSURANCE' | 'CREDIT_FUND' | 'DFI' | 'RETAIL' | 'HEDGE_FUND'
 
 export interface TrancheSubscriber {
@@ -242,6 +271,8 @@ export interface Pool {
   tokenIds: string[]
   projectIds: string[]
   status: PoolStatus
+  requestedByPmId?: string
+  pmAllocations?: PmAllocation[]
   totalSizeINR: number
   currency: string
   tranches: Tranche[]
@@ -283,7 +314,7 @@ export interface CreateOfferBody {
 }
 
 export interface UpdateOfferBody {
-  action: 'accept' | 'reject' | 'request_revision' | 'resubmit'
+  action: 'accept' | 'reject' | 'request_revision' | 'resubmit' | 'withdraw'
   revisionNotes?: string
   updatedTerms?: Partial<CreateOfferBody>
 }
@@ -345,6 +376,11 @@ export interface CreatePoolBody {
     coupon: number
     tenorYears: number
   }>
+}
+
+export interface CreatePoolRequestBody {
+  name: string
+  allocations: PmAllocation[]
 }
 
 export interface SubscribeTrancheBody {

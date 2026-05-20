@@ -1,196 +1,672 @@
+'use client'
+
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { listTokens, listPools } from '@/lib/token-store'
-import { listProjects } from '@/lib/store'
+import { useRouter } from 'next/navigation'
+import { useAuth } from '@/components/auth/auth-context'
+import { cn } from '@/lib/utils'
+import type { Project, Token, Pool } from '@/types'
 
-export const dynamic = 'force-dynamic'
+// ─── Shared helpers ───────────────────────────────────────────────────────────
 
-export default async function DashboardPage() {
-  const tokens   = await listTokens()
-  const pools    = await listPools()
+function KpiCard({ label, value, icon, accent, href }: {
+  label: string; value: string | number; icon: string; accent: string; href?: string
+}) {
+  const cls = `bg-surface-container-lowest rounded-xl border border-outline-variant/60 p-5 shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all`
+  const inner = (
+    <>
+      <div className="flex items-center gap-2 mb-2">
+        <span className={`material-symbols-outlined text-[18px] ${accent}`}>{icon}</span>
+        <p className="text-label-caps text-on-surface-variant">{label}</p>
+      </div>
+      <p className={`text-data-point font-bold ${accent}`}>{value}</p>
+    </>
+  )
+  return href ? <Link href={href} className={cls}>{inner}</Link> : <div className={cls}>{inner}</div>
+}
 
-  const token = tokens[0]
-  const pool  = pools[0]
+function SectionHeader({ icon, title, count, accent }: {
+  icon: string; title: string; count?: number; accent?: string
+}) {
+  return (
+    <div className="flex items-center gap-2 mb-3">
+      <span className={`material-symbols-outlined text-[18px] ${accent ?? 'text-on-surface-variant'}`}>{icon}</span>
+      <h2 className="text-label-caps font-bold text-on-surface tracking-widest">{title}</h2>
+      {count != null && count > 0 && (
+        <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-primary text-on-primary text-[10px] font-bold">{count}</span>
+      )}
+    </div>
+  )
+}
 
-  const totalAUM     = tokens.reduce((s, t) => s + t.nominalValueINR, 0)
-  const listedPools  = pools.filter(p => p.status === 'LISTED').length
-  const totalSubscribed = pools.flatMap(p => p.tranches).reduce((s, t) => s + t.subscribedINR, 0)
+function EmptyCard({ icon, text }: { icon: string; text: string }) {
+  return (
+    <div className="flex items-center gap-3 px-5 py-4 bg-surface-container rounded-xl border border-outline-variant/40">
+      <span className="material-symbols-outlined text-outline text-[20px]">{icon}</span>
+      <p className="text-caption text-on-surface-variant">{text}</p>
+    </div>
+  )
+}
+
+// ─── Status badge ─────────────────────────────────────────────────────────────
+
+const STATUS_COLORS: Record<string, string> = {
+  DRAFT: 'bg-outline-variant/40 text-on-surface-variant',
+  SUBMITTED: 'bg-primary/10 text-primary',
+  ACTIVE: 'bg-secondary/10 text-secondary',
+  PUBLISHED_FOR_FINANCE: 'bg-tertiary/10 text-tertiary',
+  OFFER_RECEIVED: 'bg-tertiary/20 text-tertiary',
+  FINANCING_ACCEPTED: 'bg-secondary/20 text-secondary',
+  PUBLISHED_FOR_SA: 'bg-primary/20 text-primary',
+  TRANSACTING: 'bg-secondary/30 text-secondary',
+  TOKENISED: 'bg-secondary/10 text-secondary',
+  REQUESTED: 'bg-tertiary/10 text-tertiary',
+  PM_APPROVED: 'bg-secondary/10 text-secondary',
+  LISTED: 'bg-secondary/20 text-secondary',
+  STRUCTURING: 'bg-primary/10 text-primary',
+}
+
+function StatusBadge({ status }: { status: string }) {
+  return (
+    <span className={cn('text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider', STATUS_COLORS[status] ?? 'bg-outline-variant/30 text-on-surface-variant')}>
+      {status.replace(/_/g, ' ')}
+    </span>
+  )
+}
+
+// ─── SA Dashboard ─────────────────────────────────────────────────────────────
+
+function SADashboard({ token, projects, pools }: { token: string; projects: Project[]; pools: Pool[] }) {
+  const readyForSA = projects.filter(p => p.status === 'PUBLISHED_FOR_SA')
+  const pendingRequests = pools.filter(p => p.status === 'REQUESTED')
+  const myPools = pools.filter(p => !['REQUESTED'].includes(p.status))
+  const tokens = pools.flatMap(p => p.tokenIds)
 
   return (
-    <div className="py-gutter space-y-8">
-      {/* Header */}
-      <div>
-        <h1 className="text-display-lg text-on-surface">Command Center</h1>
-        <p className="text-body-base text-on-surface-variant mt-1">
-          LIUM Finternet platform — real-time overview of tokenised energy assets
-        </p>
-      </div>
-
-      {/* KPI row */}
+    <div className="space-y-8">
+      {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[
-          { label: 'Total AUM',         value: `$${totalAUM.toLocaleString()}M`, icon: 'payments',        border: 'border-l-secondary', iconColor: 'text-secondary', href: '/tokenise' },
-          { label: 'Tokens Issued',     value: tokens.length,                    icon: 'token',           border: 'border-l-primary',   iconColor: 'text-primary',   href: '/tokenise' },
-          { label: 'Securities Listed', value: listedPools,                      icon: 'storefront',      border: 'border-l-tertiary',  iconColor: 'text-tertiary',  href: '/marketplace' },
-          { label: 'Subscribed',        value: `$${totalSubscribed.toLocaleString()}M`, icon: 'account_balance', border: 'border-l-secondary', iconColor: 'text-secondary', href: '/marketplace' },
-        ].map(({ label, value, icon, border, iconColor, href }) => (
-          <Link key={label} href={href} className={`bg-surface-container-lowest rounded-xl border border-outline-variant/60 border-l-4 ${border} p-5 shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all`}>
-            <div className="flex items-center gap-2 mb-2">
-              <span className={`material-symbols-outlined text-[18px] ${iconColor}`}>{icon}</span>
-              <p className="text-label-caps text-on-surface-variant">{label}</p>
-            </div>
-            <p className="text-data-point font-bold text-on-surface">{value}</p>
-          </Link>
-        ))}
+        <KpiCard label="Ready to Tokenise" value={readyForSA.length} icon="pending_actions" accent="text-primary" href="/projects" />
+        <KpiCard label="Pool Requests" value={pendingRequests.length} icon="swap_horiz" accent="text-tertiary" href="/pool-requests" />
+        <KpiCard label="Tokens Issued" value={tokens.length} icon="token" accent="text-secondary" href="/tokenise" />
+        <KpiCard label="Active Pools" value={myPools.filter(p => p.status === 'LISTED').length} icon="hub" accent="text-secondary" href="/securities" />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-        {/* ── Featured token ── */}
-        {token && (
-          <div className="lg:col-span-2 bg-surface-container-lowest rounded-2xl border border-outline-variant/60 shadow-card overflow-hidden">
-            <div className="px-6 pt-6 pb-4 border-b border-outline-variant/40 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <span className="material-symbols-outlined text-secondary text-[20px]">token</span>
-                <h2 className="text-label-caps font-bold text-on-surface tracking-widest">Active Token</h2>
-              </div>
-              <Link href={`/tokenise/${token.id}`} className="text-label-caps text-primary hover:underline">View →</Link>
-            </div>
-            <div className="p-6 flex items-start gap-6">
-              {/* LQ Ring */}
-              <div className="relative shrink-0">
-                <svg width="100" height="100" viewBox="0 0 100 100" className="-rotate-90">
-                  <circle cx="50" cy="50" r="40" fill="none" stroke="#e7eeff" strokeWidth="10" />
-                  <circle cx="50" cy="50" r="40" fill="none"
-                    stroke="#006a65"
-                    strokeWidth="10"
-                    strokeDasharray={`${2 * Math.PI * 40}`}
-                    strokeDashoffset={`${2 * Math.PI * 40 * (1 - token.lqScore.composite)}`}
-                    strokeLinecap="round"
-                  />
-                </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <p className="text-xl font-bold text-on-surface">{token.lqScore.composite.toFixed(2)}</p>
-                  <p className="text-[9px] font-bold text-secondary">LQ</p>
-                </div>
-              </div>
-              <div className="flex-1">
-                <p className="font-bold text-on-surface font-mono">{token.tokenId}</p>
-                <p className="text-caption text-on-surface-variant mb-3">{token.issuedTo}</p>
-                <div className="grid grid-cols-2 gap-3">
-                  {[
-                    { label: 'Nominal',  value: `$${token.nominalValueINR.toLocaleString()}M` },
-                    { label: 'Status',   value: token.status },
-                    { label: 'Support',  value: `$${token.vgfMilestones.filter(v => v.status === 'RELEASED').reduce((s, v) => s + v.amountINR, 0)}M` },
-                    { label: 'Ops',      value: token.operations.length },
-                  ].map(({ label, value }) => (
-                    <div key={label} className="bg-surface-container-low rounded-lg p-2.5">
-                      <p className="text-[10px] text-on-surface-variant uppercase">{label}</p>
-                      <p className="text-caption font-bold text-on-surface">{value}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-            {/* Operation history mini */}
-            <div className="border-t border-outline-variant/20 px-6 py-4">
-              <p className="text-label-caps text-on-surface-variant mb-3">Recent Operations</p>
-              <div className="flex flex-wrap gap-2">
-                {token.operations.slice(0, 5).map((op, i) => (
-                  <div key={i} className="flex items-center gap-1.5 bg-surface-container rounded-lg px-3 py-1.5">
-                    <span className="text-[10px] font-bold text-on-surface">{op.operation}</span>
-                    <span className="text-[10px] text-on-surface-variant">
-                      {new Date(op.timestamp).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
-                    </span>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Assets waiting to tokenise */}
+        <div>
+          <SectionHeader icon="pending_actions" title="AWAITING TOKENISATION" count={readyForSA.length} accent="text-primary" />
+          {readyForSA.length === 0 ? (
+            <EmptyCard icon="hourglass_empty" text="No projects published for you yet — developers publish after financing closes." />
+          ) : (
+            <div className="space-y-2">
+              {readyForSA.slice(0, 5).map(p => (
+                <div key={p.id} className="bg-surface-container-lowest rounded-xl border border-outline-variant/60 flex items-center gap-4 px-5 py-3 shadow-card">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                    <span className="material-symbols-outlined text-primary text-[16px]">bolt</span>
                   </div>
-                ))}
-              </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-caption font-bold text-on-surface truncate">{p.name}</p>
+                    <p className="text-[10px] text-on-surface-variant">{p.location} · {p.assetType}</p>
+                  </div>
+                  <Link href="/tokenise" className="inline-flex items-center gap-1 text-[10px] font-bold text-primary hover:opacity-80 transition-opacity shrink-0">
+                    <span className="material-symbols-outlined text-[13px]">token</span>
+                    Tokenise
+                  </Link>
+                </div>
+              ))}
             </div>
+          )}
+        </div>
+
+        {/* Pool requests from PM */}
+        <div>
+          <SectionHeader icon="swap_horiz" title="POOL REQUESTS FROM PM" count={pendingRequests.length} accent="text-tertiary" />
+          {pendingRequests.length === 0 ? (
+            <EmptyCard icon="inbox" text="Portfolio managers will send pool composition requests here." />
+          ) : (
+            <div className="space-y-2">
+              {pendingRequests.slice(0, 5).map(pool => (
+                <div key={pool.id} className="bg-surface-container-lowest rounded-xl border border-outline-variant/60 flex items-center gap-4 px-5 py-3 shadow-card">
+                  <div className="w-8 h-8 rounded-lg bg-tertiary/10 flex items-center justify-center shrink-0">
+                    <span className="material-symbols-outlined text-tertiary text-[16px]">workspaces</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-caption font-bold text-on-surface truncate">{pool.name}</p>
+                    <p className="text-[10px] text-on-surface-variant">{pool.pmAllocations?.length ?? 0} assets · {new Date(pool.createdAt).toLocaleDateString()}</p>
+                  </div>
+                  <Link href="/pool-requests" className="inline-flex items-center gap-1 text-[10px] font-bold text-tertiary hover:opacity-80 transition-opacity shrink-0">
+                    <span className="material-symbols-outlined text-[13px]">rate_review</span>
+                    Review
+                  </Link>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* My pools pipeline */}
+      {myPools.length > 0 && (
+        <div>
+          <SectionHeader icon="hub" title="MY POOL PIPELINE" accent="text-secondary" />
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {myPools.slice(0, 6).map(pool => (
+              <Link key={pool.id} href={`/securities/${pool.id}`}
+                className="bg-surface-container-lowest rounded-xl border border-outline-variant/60 p-4 shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-caption font-bold text-on-surface truncate flex-1 mr-2">{pool.name}</p>
+                  <StatusBadge status={pool.status} />
+                </div>
+                <p className="text-[10px] text-on-surface-variant">{pool.tranches.length} tranches · ${pool.totalSizeINR.toLocaleString()}M</p>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── PM Dashboard ─────────────────────────────────────────────────────────────
+
+function PMDashboard({ userId, authToken, pools, availableTokens }: {
+  userId: string; authToken: string; pools: Pool[]; availableTokens: Token[]
+}) {
+  const myPools = pools.filter(p => p.requestedByPmId === userId)
+  const pendingRequests = myPools.filter(p => p.status === 'REQUESTED')
+  const approvedPools = myPools.filter(p => p.status === 'PM_APPROVED')
+  const listedPools = myPools.filter(p => p.status === 'LISTED')
+  const [publishing, setPublishing] = useState<string | null>(null)
+
+  async function publishPool(poolId: string) {
+    setPublishing(poolId)
+    await fetch(`/api/pools/${poolId}`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${authToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'LISTED', listedAt: new Date().toISOString() }),
+    })
+    setPublishing(null)
+    window.location.reload()
+  }
+
+  return (
+    <div className="space-y-8">
+      {/* KPIs */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <KpiCard label="Available Assets" value={availableTokens.length} icon="token" accent="text-primary" href="/pool-requests" />
+        <KpiCard label="Pending Requests" value={pendingRequests.length} icon="hourglass_empty" accent="text-tertiary" href="/pool-requests" />
+        <KpiCard label="Ready to Publish" value={approvedPools.length} icon="check_circle" accent="text-secondary" href="/pool-requests" />
+        <KpiCard label="Live Offerings" value={listedPools.length} icon="deployed_code" accent="text-secondary" href="/offerings" />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Approved pools — ready to publish */}
+        <div>
+          <SectionHeader icon="check_circle" title="APPROVED — READY TO PUBLISH" count={approvedPools.length} accent="text-secondary" />
+          {approvedPools.length === 0 ? (
+            <EmptyCard icon="hourglass_empty" text="Approved pools from the SA will appear here — ready for you to publish to investors." />
+          ) : (
+            <div className="space-y-2">
+              {approvedPools.map(pool => (
+                <div key={pool.id} className="bg-surface-container-lowest rounded-xl border border-secondary/30 flex items-center gap-4 px-5 py-3 shadow-card">
+                  <div className="w-8 h-8 rounded-lg bg-secondary/10 flex items-center justify-center shrink-0">
+                    <span className="material-symbols-outlined text-secondary text-[16px]">workspaces</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-caption font-bold text-on-surface truncate">{pool.name}</p>
+                    <p className="text-[10px] text-on-surface-variant">{pool.tranches.length} tranches · ${pool.totalSizeINR.toLocaleString()}M</p>
+                  </div>
+                  <button
+                    onClick={() => publishPool(pool.id)}
+                    disabled={publishing === pool.id}
+                    className="inline-flex items-center gap-1 text-[10px] font-bold text-on-secondary bg-secondary px-3 py-1.5 rounded-lg hover:opacity-90 transition-all disabled:opacity-50 shrink-0"
+                  >
+                    {publishing === pool.id ? 'Publishing…' : 'Publish to Investors'}
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Pending requests */}
+        <div>
+          <SectionHeader icon="swap_horiz" title="WAITING FOR SA" count={pendingRequests.length} accent="text-tertiary" />
+          {pendingRequests.length === 0 ? (
+            <EmptyCard icon="inbox" text="Your pool requests will appear here while SA reviews them." />
+          ) : (
+            <div className="space-y-2">
+              {pendingRequests.map(pool => (
+                <div key={pool.id} className="bg-surface-container-lowest rounded-xl border border-outline-variant/60 flex items-center gap-4 px-5 py-3">
+                  <div className="w-8 h-8 rounded-lg bg-tertiary/10 flex items-center justify-center shrink-0">
+                    <span className="material-symbols-outlined text-tertiary text-[16px]">pending</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-caption font-bold text-on-surface truncate">{pool.name}</p>
+                    <p className="text-[10px] text-on-surface-variant">{pool.pmAllocations?.length ?? 0} assets requested · {new Date(pool.createdAt).toLocaleDateString()}</p>
+                  </div>
+                  <StatusBadge status="REQUESTED" />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Available assets from SA */}
+      <div>
+        <SectionHeader icon="token" title="AVAILABLE ASSETS FROM SA" count={availableTokens.length} accent="text-primary" />
+        {availableTokens.length === 0 ? (
+          <EmptyCard icon="hourglass_empty" text="Tokenised assets from the SA will appear here — select them to request a pool." />
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {availableTokens.slice(0, 6).map(tok => (
+              <div key={tok.id} className="bg-surface-container-lowest rounded-xl border border-outline-variant/60 p-4 shadow-card">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-[10px] font-bold font-mono text-primary truncate">{tok.tokenId}</p>
+                  <StatusBadge status={tok.status} />
+                </div>
+                <p className="text-caption font-bold text-on-surface">${tok.nominalValueINR.toLocaleString()}M</p>
+                <p className="text-[10px] text-on-surface-variant mt-0.5">LQ {tok.lqScore.composite.toFixed(3)} · {tok.issuedTo}</p>
+              </div>
+            ))}
           </div>
         )}
-
-        {/* ── Quick actions ── */}
-        <div className="space-y-4">
-          <h2 className="text-label-caps font-bold text-on-surface tracking-widest">Quick Actions</h2>
-          {[
-            { icon: 'add',          label: 'Onboard New Asset',        href: '/onboard/project-details', desc: 'Register and tokenise an energy asset' },
-            { icon: 'token',        label: 'Token Registry',           href: '/tokenise',                desc: `${tokens.length} token${tokens.length !== 1 ? 's' : ''} active` },
-            { icon: 'hub',          label: 'Securities Pools',         href: '/securities',              desc: `${pools.length} pool${pools.length !== 1 ? 's' : ''} structured` },
-            { icon: 'storefront',   label: 'Investor Marketplace',     href: '/marketplace',             desc: `${listedPools} pool${listedPools !== 1 ? 's' : ''} listed` },
-            { icon: 'account_balance', label: 'Project Registry',       href: '/projects',                desc: 'Manage registered projects' },
-          ].map(({ icon, label, href, desc }) => (
-            <Link
-              key={href}
-              href={href}
-              className="flex items-center gap-4 p-4 bg-surface-container-lowest rounded-xl border border-outline-variant/60 shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all"
-            >
-              <div className="w-10 h-10 rounded-xl bg-secondary-container/30 flex items-center justify-center shrink-0">
-                <span className="material-symbols-outlined text-secondary text-[20px]">{icon}</span>
-              </div>
-              <div>
-                <p className="text-caption font-bold text-on-surface">{label}</p>
-                <p className="text-[11px] text-on-surface-variant">{desc}</p>
-              </div>
-              <span className="material-symbols-outlined text-outline text-[16px] ml-auto">chevron_right</span>
+        {availableTokens.length > 0 && (
+          <div className="mt-4">
+            <Link href="/pool-requests"
+              className="inline-flex items-center gap-2 bg-primary text-on-primary px-6 py-2.5 rounded-lg text-label-caps font-bold hover:opacity-90 transition-all shadow-sm">
+              <span className="material-symbols-outlined text-[16px]">add</span>
+              Request a Pool
             </Link>
-          ))}
+          </div>
+        )}
+      </div>
+
+      {/* Live offerings */}
+      {listedPools.length > 0 && (
+        <div>
+          <SectionHeader icon="deployed_code" title="MY LIVE OFFERINGS" accent="text-secondary" />
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {listedPools.map(pool => {
+              const totalSubscribed = pool.tranches.reduce((s, t) => s + t.subscribedINR, 0)
+              const fillPct = pool.totalSizeINR > 0 ? (totalSubscribed / pool.totalSizeINR) * 100 : 0
+              return (
+                <Link key={pool.id} href={`/securities/${pool.id}`}
+                  className="bg-surface-container-lowest rounded-xl border border-outline-variant/60 p-4 shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-caption font-bold text-on-surface truncate flex-1 mr-2">{pool.name}</p>
+                    <StatusBadge status="LISTED" />
+                  </div>
+                  <p className="text-[10px] text-on-surface-variant mb-3">{pool.tranches.length} tranches · ${pool.totalSizeINR.toLocaleString()}M</p>
+                  <div className="h-1.5 bg-outline-variant/20 rounded-full overflow-hidden">
+                    <div className="h-full bg-secondary rounded-full" style={{ width: `${Math.max(fillPct, 2)}%` }} />
+                  </div>
+                  <p className="text-[10px] text-on-surface-variant mt-1">{fillPct.toFixed(0)}% subscribed</p>
+                </Link>
+              )
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Investor Dashboard ───────────────────────────────────────────────────────
+
+function InvestorDashboard({ userId, pools }: { userId: string; pools: Pool[] }) {
+  const listedPools = pools.filter(p => p.status === 'LISTED')
+
+  const myPositions = pools.flatMap(pool =>
+    pool.tranches.flatMap(tranche =>
+      tranche.subscribers
+        .filter(s => s.investorId === userId)
+        .map(s => ({ pool, tranche, subscription: s }))
+    )
+  )
+
+  const totalInvested = myPositions.reduce((s, p) => s + p.subscription.amountINR, 0)
+  const avgYield = myPositions.length > 0
+    ? myPositions.reduce((s, p) => s + p.tranche.coupon * p.subscription.amountINR, 0) / totalInvested
+    : 0
+
+  return (
+    <div className="space-y-8">
+      {/* KPIs */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <KpiCard label="Available Offerings" value={listedPools.length} icon="storefront" accent="text-primary" href="/marketplace" />
+        <KpiCard label="My Positions" value={myPositions.length} icon="savings" accent="text-secondary" href="/investments" />
+        <KpiCard label="Total Invested" value={`$${totalInvested.toLocaleString()}M`} icon="payments" accent="text-secondary" />
+        <KpiCard label="Avg Yield" value={myPositions.length > 0 ? `${avgYield.toFixed(1)}%` : '—'} icon="trending_up" accent="text-tertiary" />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Available offerings */}
+        <div>
+          <SectionHeader icon="storefront" title="AVAILABLE TO INVEST" count={listedPools.length} accent="text-primary" />
+          {listedPools.length === 0 ? (
+            <EmptyCard icon="hourglass_empty" text="Portfolio managers will publish offerings here. Check back soon." />
+          ) : (
+            <div className="space-y-2">
+              {listedPools.slice(0, 5).map(pool => {
+                const minCoupon = pool.tranches.length > 0 ? Math.min(...pool.tranches.map(t => t.coupon)) : 0
+                const maxCoupon = pool.tranches.length > 0 ? Math.max(...pool.tranches.map(t => t.coupon)) : 0
+                return (
+                  <Link key={pool.id} href={`/securities/${pool.id}`}
+                    className="bg-surface-container-lowest rounded-xl border border-outline-variant/60 flex items-center gap-4 px-5 py-3 shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all">
+                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                      <span className="material-symbols-outlined text-primary text-[16px]">workspaces</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-caption font-bold text-on-surface truncate">{pool.name}</p>
+                      <p className="text-[10px] text-on-surface-variant">${pool.totalSizeINR.toLocaleString()}M · {minCoupon === maxCoupon ? `${minCoupon}%` : `${minCoupon}–${maxCoupon}%`} yield</p>
+                    </div>
+                    <span className="material-symbols-outlined text-outline text-[16px] shrink-0">chevron_right</span>
+                  </Link>
+                )
+              })}
+              {listedPools.length > 5 && (
+                <Link href="/marketplace" className="text-[11px] font-bold text-primary hover:opacity-80 transition-opacity px-1">
+                  View all {listedPools.length} offerings →
+                </Link>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* My positions */}
+        <div>
+          <SectionHeader icon="savings" title="MY PORTFOLIO" count={myPositions.length} accent="text-secondary" />
+          {myPositions.length === 0 ? (
+            <EmptyCard icon="savings" text="Subscribe to tranches on the marketplace to start building your portfolio." />
+          ) : (
+            <div className="space-y-2">
+              {myPositions.slice(0, 5).map(({ pool, tranche, subscription }) => (
+                <Link key={subscription.id} href={`/securities/${pool.id}`}
+                  className="bg-surface-container-lowest rounded-xl border border-outline-variant/60 flex items-center gap-4 px-5 py-3 shadow-card hover:shadow-card-hover transition-all">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-caption font-bold text-on-surface truncate">{pool.name}</p>
+                    <p className="text-[10px] text-on-surface-variant">{tranche.class} tranche · {tranche.coupon}% yield</p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="text-caption font-bold text-secondary">${subscription.amountINR.toLocaleString()}M</p>
+                  </div>
+                </Link>
+              ))}
+              {myPositions.length > 5 && (
+                <Link href="/investments" className="text-[11px] font-bold text-primary hover:opacity-80 transition-opacity px-1">
+                  View all positions →
+                </Link>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Pool summary */}
-      {pool && (
-        <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/60 shadow-card overflow-hidden">
-          <div className="px-6 pt-6 pb-4 border-b border-outline-variant/40 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="material-symbols-outlined text-secondary text-[20px]">hub</span>
-              <h2 className="text-label-caps font-bold text-on-surface tracking-widest">Latest Pool — {pool.name}</h2>
-            </div>
-            <Link href={`/securities/${pool.id}`} className="text-label-caps text-primary hover:underline">View pool →</Link>
-          </div>
-          <div className="p-6">
-            {/* Stacked bar */}
-            <div className="flex h-8 rounded-xl overflow-hidden mb-4">
-              {pool.tranches.map(t => {
-                const clr = { SENIOR: 'bg-secondary', MEZZANINE: 'bg-primary', JUNIOR: 'bg-tertiary', EQUITY: 'bg-outline' }[t.class] ?? 'bg-outline'
-                return (
-                  <div
-                    key={t.id}
-                    className={`${clr} flex items-center justify-center`}
-                    style={{ width: `${(t.sizeINR / pool.totalSizeINR) * 100}%` }}
-                  >
-                    <span className="text-[10px] font-bold text-white">{t.rating}</span>
+      <div className="flex gap-3">
+        <Link href="/marketplace"
+          className="inline-flex items-center gap-2 bg-primary text-on-primary px-6 py-2.5 rounded-lg text-label-caps font-bold hover:opacity-90 transition-all shadow-sm">
+          <span className="material-symbols-outlined text-[16px]">storefront</span>
+          Browse Marketplace
+        </Link>
+        {myPositions.length > 0 && (
+          <Link href="/investments"
+            className="inline-flex items-center gap-2 border border-outline-variant text-on-surface px-6 py-2.5 rounded-lg text-label-caps font-bold hover:bg-surface-container transition-all">
+            My Investments
+          </Link>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ─── Developer Dashboard ──────────────────────────────────────────────────────
+
+function DeveloperDashboard({ projects, offers }: { projects: Project[]; offers: unknown[] }) {
+  const myProjects = projects
+  const drafts = myProjects.filter(p => p.status === 'DRAFT').length
+  const published = myProjects.filter(p => ['PUBLISHED_FOR_FINANCE', 'OFFER_RECEIVED'].includes(p.status)).length
+  const active = myProjects.filter(p => ['FINANCING_ACCEPTED', 'PUBLISHED_FOR_SA', 'TRANSACTING', 'TOKENISED'].includes(p.status)).length
+  const pendingOffers = (offers as { status: string }[]).filter(o => ['PENDING', 'REVISION_REQUESTED'].includes(o.status)).length
+
+  return (
+    <div className="space-y-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <KpiCard label="Total Projects" value={myProjects.length} icon="account_balance" accent="text-primary" href="/projects" />
+        <KpiCard label="Drafts" value={drafts} icon="edit_document" accent="text-on-surface-variant" href="/projects" />
+        <KpiCard label="Seeking Finance" value={published} icon="search" accent="text-tertiary" href="/projects" />
+        <KpiCard label="Incoming Offers" value={pendingOffers} icon="payments" accent={pendingOffers > 0 ? 'text-secondary' : 'text-on-surface-variant'} href="/projects" />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div>
+          <SectionHeader icon="account_balance" title="MY PROJECTS" count={myProjects.length} accent="text-primary" />
+          {myProjects.length === 0 ? (
+            <EmptyCard icon="add" text="No projects yet — register your first energy asset." />
+          ) : (
+            <div className="space-y-2">
+              {myProjects.slice(0, 6).map(p => (
+                <Link key={p.id} href={`/projects/${p.id}`}
+                  className="bg-surface-container-lowest rounded-xl border border-outline-variant/60 flex items-center gap-4 px-5 py-3 shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-caption font-bold text-on-surface truncate">{p.name}</p>
+                    <p className="text-[10px] text-on-surface-variant">{p.location} · {p.assetType}</p>
                   </div>
-                )
-              })}
+                  <StatusBadge status={p.status} />
+                </Link>
+              ))}
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-              {pool.tranches.map(t => {
-                const pct = t.sizeINR > 0 ? (t.subscribedINR / t.sizeINR) * 100 : 0
-                return (
-                  <div key={t.id} className="bg-surface-container-low rounded-xl p-3">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-[10px] font-bold text-on-surface-variant uppercase">{t.class}</span>
-                      <span className="text-[10px] font-bold text-on-surface">{t.rating}</span>
-                    </div>
-                    <p className="text-caption font-bold text-on-surface">${t.sizeINR.toLocaleString()}M</p>
-                    <p className="text-[10px] text-on-surface-variant">{t.coupon}% · {t.tenorYears}yr</p>
-                    <div className="h-1 bg-outline-variant/30 rounded-full mt-2 overflow-hidden">
-                      <div
-                        className={`h-full rounded-full ${({ SENIOR: 'bg-secondary', MEZZANINE: 'bg-primary', JUNIOR: 'bg-tertiary', EQUITY: 'bg-outline' }[t.class] ?? 'bg-outline')}`}
-                        style={{ width: `${pct}%` }}
-                      />
-                    </div>
-                    <p className="text-[10px] text-on-surface-variant mt-0.5">{pct.toFixed(0)}% subscribed</p>
-                  </div>
-                )
-              })}
-              <div className="bg-surface-container-low rounded-xl p-3 flex flex-col justify-center">
-                <p className="text-[10px] font-bold text-on-surface-variant uppercase mb-1">Pool DSCR</p>
-                <p className="text-data-point font-bold text-primary">{pool.overallDSCR.toFixed(2)}x</p>
-                <p className="text-[10px] text-on-surface-variant">LQ {pool.overallLQ.toFixed(3)}</p>
+          )}
+        </div>
+
+        <div>
+          <SectionHeader icon="payments" title="RECENT ACTIVITY" accent="text-secondary" />
+          <div className="space-y-3">
+            {active > 0 && (
+              <div className="bg-secondary/5 border border-secondary/20 rounded-xl px-5 py-4">
+                <p className="text-caption font-bold text-on-surface">{active} project{active !== 1 ? 's' : ''} past financing</p>
+                <p className="text-[11px] text-on-surface-variant mt-0.5">These are in the securitisation pipeline or tokenised.</p>
               </div>
-            </div>
+            )}
+            {pendingOffers > 0 && (
+              <Link href="/projects" className="block bg-tertiary/5 border border-tertiary/20 rounded-xl px-5 py-4 hover:bg-tertiary/10 transition-colors">
+                <p className="text-caption font-bold text-on-surface">{pendingOffers} offer{pendingOffers !== 1 ? 's' : ''} need your attention</p>
+                <p className="text-[11px] text-on-surface-variant mt-0.5">Review and accept, reject, or request revisions.</p>
+              </Link>
+            )}
+            {pendingOffers === 0 && active === 0 && (
+              <EmptyCard icon="inbox" text="Publish a project to start receiving offers from financiers." />
+            )}
           </div>
         </div>
+      </div>
+
+      <Link href="/onboard/project-details"
+        className="inline-flex items-center gap-2 bg-primary text-on-primary px-6 py-2.5 rounded-lg text-label-caps font-bold hover:opacity-90 transition-all shadow-sm">
+        <span className="material-symbols-outlined text-[16px]">add</span>
+        Register New Asset
+      </Link>
+    </div>
+  )
+}
+
+// ─── Financier Dashboard ──────────────────────────────────────────────────────
+
+function FinancierDashboard({ projects, offers }: { projects: Project[]; offers: unknown[] }) {
+  const router = useRouter()
+  const available = projects.filter(p => ['PUBLISHED_FOR_FINANCE', 'OFFER_RECEIVED'].includes(p.status))
+  const myOffers = offers as { status: string; projectId: string }[]
+  const pendingOffers = myOffers.filter(o => ['PENDING', 'REVISION_REQUESTED'].includes(o.status))
+
+  return (
+    <div className="space-y-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <KpiCard label="Open Projects" value={available.length} icon="search" accent="text-primary" href="/projects" />
+        <KpiCard label="My Offers" value={myOffers.length} icon="payments" accent="text-secondary" href="/offers" />
+        <KpiCard label="Pending Response" value={pendingOffers.length} icon="hourglass_empty" accent={pendingOffers.length > 0 ? 'text-tertiary' : 'text-on-surface-variant'} href="/offers" />
+        <KpiCard label="Accepted" value={myOffers.filter(o => o.status === 'ACCEPTED').length} icon="check_circle" accent="text-secondary" href="/offers" />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div>
+          <SectionHeader icon="search" title="OPEN FOR FINANCING" count={available.length} accent="text-primary" />
+          {available.length === 0 ? (
+            <EmptyCard icon="hourglass_empty" text="No projects are currently seeking financing." />
+          ) : (
+            <div className="space-y-2">
+              {available.slice(0, 5).map(p => (
+                <div key={p.id} onClick={() => router.push(`/projects/${p.id}`)} role="link" tabIndex={0}
+                  className="bg-surface-container-lowest rounded-xl border border-outline-variant/60 flex items-center gap-4 px-5 py-3 shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all cursor-pointer">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-caption font-bold text-on-surface truncate">{p.name}</p>
+                    <p className="text-[10px] text-on-surface-variant">{p.location} · {p.financials?.totalCapexM ? `$${p.financials.totalCapexM}M CAPEX` : p.assetType}</p>
+                  </div>
+                  <Link href={`/projects/${p.id}/offer`} onClick={e => e.stopPropagation()}
+                    className="inline-flex items-center gap-1 text-[10px] font-bold text-primary hover:opacity-80 transition-opacity shrink-0">
+                    <span className="material-symbols-outlined text-[13px]">add</span>
+                    Offer
+                  </Link>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div>
+          <SectionHeader icon="payments" title="MY ACTIVE OFFERS" count={pendingOffers.length} accent="text-secondary" />
+          {pendingOffers.length === 0 ? (
+            <EmptyCard icon="inbox" text="Submit offers on open projects and track them here." />
+          ) : (
+            <div className="space-y-2">
+              {pendingOffers.slice(0, 5).map((o, i) => (
+                <div key={i} className="bg-surface-container-lowest rounded-xl border border-outline-variant/60 flex items-center gap-4 px-5 py-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-caption font-bold text-on-surface">Offer submitted</p>
+                    <p className="text-[10px] text-on-surface-variant">Awaiting developer response</p>
+                  </div>
+                  <StatusBadge status={o.status} />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
+export default function DashboardPage() {
+  const { user, token, loading } = useAuth()
+  const [projects, setProjects] = useState<Project[]>([])
+  const [pools, setPools] = useState<Pool[]>([])
+  const [tokens, setTokens] = useState<Token[]>([])
+  const [offers, setOffers] = useState<unknown[]>([])
+  const [fetching, setFetching] = useState(true)
+
+  useEffect(() => {
+    if (loading || !user || !token) return
+
+    const headers = { Authorization: `Bearer ${token}` }
+    const role = user.role
+
+    const fetches: Promise<unknown>[] = [
+      fetch('/api/projects', { headers }).then(r => r.json()).then(j => { if (j.ok) setProjects(j.data) }),
+      fetch('/api/pools', { headers }).then(r => r.json()).then(j => { if (j.ok) setPools(j.data) }),
+    ]
+
+    if (role === 'securitisation_agent' || role === 'portfolio_manager') {
+      fetches.push(
+        fetch('/api/tokens', { headers }).then(r => r.json()).then(j => { if (j.ok) setTokens(j.data) })
+      )
+    }
+
+    if (role === 'developer') {
+      fetches.push(
+        fetch('/api/offers/developer', { headers }).then(r => r.json()).then(j => { if (j.ok) setOffers(j.data) })
+      )
+    }
+
+    if (role === 'financier') {
+      fetches.push(
+        fetch('/api/offers', { headers }).then(r => r.json()).then(j => { if (j.ok) setOffers(j.data) })
+      )
+    }
+
+    Promise.all(fetches).finally(() => setFetching(false))
+  }, [user, token, loading])
+
+  if (loading || fetching) {
+    return (
+      <div className="py-gutter space-y-6">
+        <div className="h-9 w-56 bg-surface-container-high rounded-lg animate-pulse" />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => <div key={i} className="h-24 bg-surface-container-lowest rounded-xl border border-outline-variant/60 animate-pulse" />)}
+        </div>
+        <div className="space-y-3">
+          {[...Array(4)].map((_, i) => <div key={i} className="h-16 bg-surface-container-lowest rounded-xl border border-outline-variant/60 animate-pulse" />)}
+        </div>
+      </div>
+    )
+  }
+
+  const roleLabels: Record<string, string> = {
+    developer: 'Project Developer',
+    financier: 'Financier',
+    securitisation_agent: 'Securitisation Agent',
+    portfolio_manager: 'Portfolio Manager',
+    investor: 'Investor',
+  }
+
+  const role = user?.role ?? 'developer'
+  const myProjects = role === 'developer'
+    ? projects
+    : role === 'financier'
+      ? projects.filter(p => ['PUBLISHED_FOR_FINANCE', 'OFFER_RECEIVED', 'FINANCING_ACCEPTED'].includes(p.status))
+      : role === 'securitisation_agent'
+        ? projects.filter(p => ['PUBLISHED_FOR_SA', 'TRANSACTING', 'TOKENISED'].includes(p.status))
+        : []
+
+  return (
+    <div className="py-gutter space-y-8 max-w-6xl">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">{roleLabels[role] ?? role}</p>
+          <h1 className="text-display-lg text-on-surface">Command Center</h1>
+          {user?.fullName && (
+            <p className="text-body-base text-on-surface-variant mt-1">Welcome back, {user.fullName.split(' ')[0]}</p>
+          )}
+        </div>
+        <div className="flex items-center gap-2 mt-1">
+          <span className="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse" />
+          <p className="text-[11px] text-on-surface-variant">Live</p>
+        </div>
+      </div>
+
+      {/* Role-specific content */}
+      {role === 'securitisation_agent' && (
+        <SADashboard token={token ?? ''} projects={myProjects} pools={pools} />
+      )}
+      {role === 'portfolio_manager' && (
+        <PMDashboard
+          userId={user?.id ?? ''}
+          authToken={token ?? ''}
+          pools={pools}
+          availableTokens={tokens.filter(t => t.status === 'ACTIVE')}
+        />
+      )}
+      {role === 'investor' && (
+        <InvestorDashboard userId={user?.id ?? ''} pools={pools} />
+      )}
+      {role === 'developer' && (
+        <DeveloperDashboard projects={myProjects} offers={offers} />
+      )}
+      {role === 'financier' && (
+        <FinancierDashboard projects={myProjects} offers={offers} />
       )}
     </div>
   )

@@ -68,9 +68,17 @@ export function ProjectDetailsForm() {
   const [annualRevenueM, setAnnualRevenueM] = useState('')
   const [annualOpexM, setAnnualOpexM] = useState('')
   const [annualDebtServiceM, setAnnualDebtServiceM] = useState('')
+  const [isOperational, setIsOperational] = useState(false)
 
   const [gapFundingEligible, setGapFundingEligible] = useState(false)
   const [gapFundingProgram, setGapFundingProgram] = useState('')
+
+  const [assetMake, setAssetMake] = useState('')
+  const [assetModel, setAssetModel] = useState('')
+  const [assetUnitCount, setAssetUnitCount] = useState('')
+  const [constructionStartDate, setConstructionStartDate] = useState('')
+  const [ptoDate, setPtoDate] = useState('')
+  const [fundingRows, setFundingRows] = useState<{quarter: string; amountM: string}[]>([])
 
   const [designCycleCount, setDesignCycleCount] = useState('')
   const [bessDegradationRate, setBessDegradationRate] = useState('')
@@ -98,7 +106,14 @@ export function ProjectDetailsForm() {
     setSubmitting(true)
     setFormError('')
 
-    const assetDetails: Record<string, unknown> = {}
+    const assetDetails: Record<string, unknown> = { isOperational }
+    if (assetMake) assetDetails.make = assetMake
+    if (assetModel) assetDetails.model = assetModel
+    if (assetUnitCount) assetDetails.unitCount = parseFloat(assetUnitCount)
+    if (constructionStartDate) assetDetails.constructionStartDate = constructionStartDate
+    if (ptoDate) assetDetails.ptoDate = ptoDate
+    const validRows = fundingRows.filter(r => r.quarter && r.amountM)
+    if (validRows.length > 0) assetDetails.fundingSchedule = validRows.map(r => ({ quarter: r.quarter, amountM: parseFloat(r.amountM) }))
     if (showBessDetails) {
       if (designCycleCount) assetDetails.designCycleCount = parseFloat(designCycleCount)
       if (bessDegradationRate) assetDetails.bessDegradationRate = parseFloat(bessDegradationRate)
@@ -166,6 +181,28 @@ export function ProjectDetailsForm() {
             onChange={(e) => setJurisdiction(e.target.value)}
           />
 
+          <div className="rounded-xl border border-outline-variant/60 bg-surface-container-lowest p-5">
+            <p className="text-label-caps font-bold text-on-surface tracking-widest mb-1">IS THIS PROJECT OPERATIONAL?</p>
+            <p className="text-caption text-on-surface-variant mb-4">If the asset is already commissioned and generating, we'll collect telemetry details. If not, you can skip that step.</p>
+            <div className="flex gap-3">
+              {([{ v: false, label: 'Pre-commissioning', icon: 'construction' }, { v: true, label: 'Operational', icon: 'bolt' }] as const).map(({ v, label, icon }) => (
+                <button
+                  key={String(v)}
+                  type="button"
+                  onClick={() => setIsOperational(v)}
+                  className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg border-2 text-label-caps font-bold transition-all ${
+                    isOperational === v
+                      ? 'border-secondary bg-secondary/10 text-secondary'
+                      : 'border-outline-variant/60 text-on-surface-variant hover:border-outline'
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[16px]">{icon}</span>
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div>
             <p className="text-label-caps font-bold text-on-surface tracking-widest mb-4">ASSET TYPE</p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -231,6 +268,35 @@ export function ProjectDetailsForm() {
 
           <p className="text-label-caps font-bold text-on-surface tracking-widest mb-4 mt-8">ASSET SPECIFICATIONS (optional)</p>
 
+          <div className="flex gap-3 items-start">
+            <div className="flex flex-col gap-1 flex-1">
+              <p className="text-label-caps font-bold text-on-surface tracking-widest">MANUFACTURER / MAKE</p>
+              <Input
+                placeholder="e.g. CATL, BYD, Tesla"
+                value={assetMake}
+                onChange={(e) => setAssetMake(e.target.value)}
+              />
+            </div>
+            <div className="flex flex-col gap-1 flex-1">
+              <p className="text-label-caps font-bold text-on-surface tracking-widest">MODEL</p>
+              <Input
+                placeholder="e.g. EnerOne, Megapack"
+                value={assetModel}
+                onChange={(e) => setAssetModel(e.target.value)}
+              />
+            </div>
+            <div className="flex flex-col gap-1 w-32 shrink-0">
+              <p className="text-label-caps font-bold text-on-surface tracking-widest">NO. OF UNITS</p>
+              <Input
+                type="number"
+                placeholder="e.g. 12"
+                min={1}
+                value={assetUnitCount}
+                onChange={(e) => setAssetUnitCount(e.target.value)}
+              />
+            </div>
+          </div>
+
           <Input
             label="CAPACITY (MW)"
             type="number"
@@ -248,6 +314,20 @@ export function ProjectDetailsForm() {
               onChange={(e) => setCapacityMWh(e.target.value)}
             />
           )}
+
+          <Input
+            label="CONSTRUCTION START DATE"
+            type="date"
+            value={constructionStartDate}
+            onChange={(e) => setConstructionStartDate(e.target.value)}
+          />
+
+          <Input
+            label="PERMIT TO OPERATE (PTO) DATE"
+            type="date"
+            value={ptoDate}
+            onChange={(e) => setPtoDate(e.target.value)}
+          />
 
           <Input
             label="COMMERCIAL OPERATION DATE (COD)"
@@ -274,7 +354,7 @@ export function ProjectDetailsForm() {
           />
 
           <Input
-            label="CONTRACTED TARIFF ($/MWh)"
+            label="CONTRACTED TARIFF ($/MWh/month)"
             type="number"
             placeholder="e.g. 45.00"
             value={ppaTariffMwh}
@@ -298,9 +378,9 @@ export function ProjectDetailsForm() {
             onChange={(e) => setTotalCapexM(e.target.value)}
           />
 
-          <div>
-            <p className="text-label-caps font-bold text-on-surface tracking-widest mb-2">DEBT FINANCING (%)</p>
-            <div className="flex gap-3">
+          <div className="flex gap-3 items-start">
+            <div className="flex flex-col gap-1 flex-1">
+              <p className="text-label-caps font-bold text-on-surface tracking-widest">DEBT FINANCING (%)</p>
               <Input
                 type="number"
                 placeholder="e.g. 67"
@@ -309,11 +389,11 @@ export function ProjectDetailsForm() {
                 value={debtPct}
                 onChange={(e) => setDebtPct(e.target.value)}
               />
-              <div className="flex flex-col gap-1 min-w-[120px]">
-                <p className="text-label-caps font-bold text-on-surface-variant tracking-widest text-xs">EQUITY (%)</p>
-                <div className="flex items-center h-10 px-3 rounded-lg bg-surface-container-high border border-outline-variant text-on-surface-variant text-sm select-none">
-                  {equityPct !== '' ? `${equityPct}%` : '—'}
-                </div>
+            </div>
+            <div className="flex flex-col gap-1 min-w-[120px]">
+              <p className="text-label-caps font-bold text-on-surface-variant tracking-widest">EQUITY (%)</p>
+              <div className="flex items-center h-10 px-3 rounded-lg bg-surface-container-high border border-outline-variant text-on-surface-variant text-sm select-none">
+                {equityPct !== '' ? `${equityPct}%` : '—'}
               </div>
             </div>
           </div>
@@ -343,6 +423,61 @@ export function ProjectDetailsForm() {
               onChange={(e) => setAnnualDebtServiceM(e.target.value)}
             />
             <p className="text-caption text-on-surface-variant mt-1">Only if existing debt</p>
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-label-caps font-bold text-on-surface tracking-widest">QUARTERLY DRAWDOWN SCHEDULE</p>
+              <button
+                type="button"
+                onClick={() => setFundingRows(r => [...r, { quarter: '', amountM: '' }])}
+                className="inline-flex items-center gap-1 text-[10px] font-bold text-secondary uppercase tracking-wide hover:opacity-80 transition-opacity"
+              >
+                <span className="material-symbols-outlined text-[14px]">add</span>
+                Add Quarter
+              </button>
+            </div>
+            {fundingRows.length === 0 ? (
+              <p className="text-[11px] text-on-surface-variant/60">No schedule added — click Add Quarter to specify per-quarter capital needs</p>
+            ) : (
+              <div className="space-y-2">
+                {fundingRows.map((row, i) => (
+                  <div key={i} className="flex gap-2 items-start">
+                    <div className="flex flex-col gap-1 flex-1">
+                      {i === 0 && <p className="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest">QUARTER</p>}
+                      <Input
+                        placeholder="e.g. Q1 2026"
+                        value={row.quarter}
+                        onChange={e => setFundingRows(rows => rows.map((r, j) => j === i ? { ...r, quarter: e.target.value } : r))}
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1 w-32 shrink-0">
+                      {i === 0 && <p className="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest">AMOUNT ($M)</p>}
+                      <Input
+                        type="number"
+                        placeholder="e.g. 5.0"
+                        value={row.amountM}
+                        onChange={e => setFundingRows(rows => rows.map((r, j) => j === i ? { ...r, amountM: e.target.value } : r))}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setFundingRows(rows => rows.filter((_, j) => j !== i))}
+                      className={`shrink-0 text-error/60 hover:text-error transition-colors ${i === 0 ? 'mt-[22px]' : ''}`}
+                    >
+                      <span className="material-symbols-outlined text-[18px]">remove_circle</span>
+                    </button>
+                  </div>
+                ))}
+                {fundingRows.some(r => r.amountM) && (
+                  <div className="flex justify-end pt-1">
+                    <p className="text-caption text-on-surface-variant">
+                      Total: <span className="font-bold text-on-surface">${fundingRows.reduce((s, r) => s + (parseFloat(r.amountM) || 0), 0).toFixed(1)}M</span>
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           <p className="text-label-caps font-bold text-on-surface tracking-widest mb-4 mt-8">GAP FUNDING (optional)</p>

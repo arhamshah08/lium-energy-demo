@@ -6,6 +6,9 @@ import { VerifyButton } from '@/components/projects/verify-button'
 import { PtoUpdater } from '@/components/projects/pto-updater'
 import { PublishActions } from '@/components/projects/publish-actions'
 import { OfferInbox } from '@/components/projects/offer-inbox'
+import { FinancierActions } from '@/components/projects/financier-actions'
+import { SAActions } from '@/components/projects/sa-actions'
+import { PMActions } from '@/components/projects/pm-actions'
 import type { AssetType, DocumentRecord, ProjectFinancials, ProjectStatus, PtoStatus, RiskProfile } from '@/types'
 
 export const dynamic = 'force-dynamic'
@@ -130,34 +133,27 @@ function FinancialsSummaryCard({ financials }: { financials: ProjectFinancials }
     dscrStr = `${dscr.toFixed(2)}x`
   }
 
-  const rows: Array<{ label: string; value: string; icon: string }> = []
+  const hasHardware = financials.assetMake || financials.assetModel || financials.assetUnitCount !== undefined
+  const hasCapacityTimeline = capacityStr || financials.codDate || financials.assetLifeYears !== undefined
+  const hasRevenueContract = financials.ppaCounterparty || financials.ppaTariffMwh !== undefined || financials.ppaContractEndDate
+  const hasFundingSchedule = (financials.fundingSchedule?.length ?? 0) > 0
+  const hasCapitalStructure = financials.totalCapexM !== undefined || financials.debtPct !== undefined || financials.equityPct !== undefined || financials.quarterlyFundingAskM !== undefined || hasFundingSchedule
+  const hasCashFlow = financials.annualRevenueM !== undefined || financials.annualOpexM !== undefined || financials.annualDebtServiceM !== undefined
+  const hasGapFunding = financials.gapFundingEligible === true
 
-  if (capacityStr) {
-    rows.push({ label: 'Capacity', value: capacityStr, icon: 'bolt' })
-  }
-  if (financials.totalCapexM !== undefined) {
-    rows.push({ label: 'Total CAPEX', value: `$${financials.totalCapexM}M`, icon: 'account_balance' })
-  }
-  if (financials.annualRevenueM !== undefined) {
-    rows.push({ label: 'Annual Revenue', value: `$${financials.annualRevenueM}M`, icon: 'trending_up' })
-  }
-  if (dscrStr) {
-    rows.push({ label: 'DSCR', value: dscrStr, icon: 'analytics' })
-  }
-  if (financials.ppaCounterparty) {
-    rows.push({ label: 'PPA Counterparty', value: financials.ppaCounterparty, icon: 'handshake' })
-  }
-  if (financials.codDate) {
-    rows.push({
-      label: 'COD',
-      value: new Date(financials.codDate).toLocaleDateString('en-US', {
-        year: 'numeric', month: 'short', day: 'numeric',
-      }),
-      icon: 'event_available',
-    })
-  }
+  if (!hasHardware && !hasCapacityTimeline && !hasRevenueContract && !hasCapitalStructure && !hasCashFlow && !hasGapFunding) return null
 
-  if (rows.length === 0) return null
+  const Row = ({ icon, label, value, highlight }: { icon: string; label: string; value: string; highlight?: boolean }) => (
+    <div className="flex items-center gap-4 px-6 py-3.5">
+      <span className="material-symbols-outlined text-outline text-[16px] shrink-0">{icon}</span>
+      <dt className="text-caption text-on-surface-variant w-36 shrink-0">{label}</dt>
+      <dd className={`text-caption font-medium ${highlight ? 'text-secondary font-bold' : 'text-on-surface'}`}>{value}</dd>
+    </div>
+  )
+
+  const SectionHeader = ({ title }: { title: string }) => (
+    <p className="text-[9px] font-bold text-on-surface-variant/60 uppercase tracking-widest px-6 pt-4 pb-1">{title}</p>
+  )
 
   return (
     <div className="bg-surface-container-lowest rounded-xl border border-outline-variant/60 shadow-card">
@@ -166,13 +162,111 @@ function FinancialsSummaryCard({ financials }: { financials: ProjectFinancials }
         <h2 className="text-label-caps font-bold text-on-surface tracking-widest">Financials</h2>
       </div>
       <dl className="divide-y divide-outline-variant/30">
-        {rows.map(({ label, value, icon }) => (
-          <div key={label} className="flex items-center gap-4 px-6 py-3.5">
-            <span className="material-symbols-outlined text-outline text-[16px] shrink-0">{icon}</span>
-            <dt className="text-caption text-on-surface-variant w-32 shrink-0">{label}</dt>
-            <dd className="text-caption text-on-surface font-medium">{value}</dd>
-          </div>
-        ))}
+        {hasHardware && (
+          <>
+            <SectionHeader title="Asset Hardware" />
+            {financials.assetMake && <Row icon="factory" label="Manufacturer" value={financials.assetMake} />}
+            {financials.assetModel && <Row icon="deployed_code" label="Model" value={financials.assetModel} />}
+            {financials.assetUnitCount !== undefined && (
+              <Row icon="stacks" label="No. of Units" value={String(financials.assetUnitCount)} />
+            )}
+          </>
+        )}
+        {hasCapacityTimeline && (
+          <>
+            <SectionHeader title="Capacity & Timeline" />
+            {capacityStr && <Row icon="bolt" label="Capacity" value={capacityStr} />}
+            {financials.codDate && (
+              <Row icon="event_available" label="COD" value={new Date(financials.codDate).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })} />
+            )}
+            {financials.assetLifeYears !== undefined && (
+              <Row icon="hourglass_bottom" label="Asset Life" value={`${financials.assetLifeYears} years`} />
+            )}
+          </>
+        )}
+        {hasRevenueContract && (
+          <>
+            <SectionHeader title="Revenue Contract" />
+            {financials.ppaCounterparty && <Row icon="handshake" label="PPA Counterparty" value={financials.ppaCounterparty} />}
+            {financials.ppaTariffMwh !== undefined && (
+              <Row icon="attach_money" label="PPA Tariff" value={`$${financials.ppaTariffMwh}/MWh/month`} />
+            )}
+            {financials.ppaContractEndDate && (
+              <Row icon="calendar_month" label="PPA Contract End" value={new Date(financials.ppaContractEndDate).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })} />
+            )}
+          </>
+        )}
+        {hasCapitalStructure && (
+          <>
+            <SectionHeader title="Capital Structure" />
+            {financials.totalCapexM !== undefined && (
+              <Row icon="account_balance" label="Total CAPEX" value={`$${financials.totalCapexM}M`} />
+            )}
+            {financials.debtPct !== undefined && (
+              <Row icon="percent" label="Debt" value={`${financials.debtPct}%`} />
+            )}
+            {financials.equityPct !== undefined && (
+              <Row icon="percent" label="Equity" value={`${financials.equityPct}%`} />
+            )}
+            {financials.quarterlyFundingAskM !== undefined && (
+              <Row icon="request_quote" label="Avg Quarterly Ask" value={`$${financials.quarterlyFundingAskM}M/quarter`} highlight />
+            )}
+            {hasFundingSchedule && (
+              <div className="px-6 py-3.5">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="material-symbols-outlined text-outline text-[16px] shrink-0">calendar_month</span>
+                  <p className="text-caption text-on-surface-variant w-36 shrink-0">Drawdown Schedule</p>
+                </div>
+                <div className="ml-9 space-y-1">
+                  {financials.fundingSchedule!.map(({ quarter, amountM }) => (
+                    <div key={quarter} className="flex items-center justify-between">
+                      <span className="text-[11px] text-on-surface-variant">{quarter}</span>
+                      <span className="text-[11px] font-semibold text-secondary">${amountM}M</span>
+                    </div>
+                  ))}
+                  <div className="flex items-center justify-between pt-1 border-t border-outline-variant/30 mt-1">
+                    <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wide">Total</span>
+                    <span className="text-[11px] font-bold text-on-surface">
+                      ${financials.fundingSchedule!.reduce((s, r) => s + r.amountM, 0).toFixed(1)}M
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+        {hasCashFlow && (
+          <>
+            <SectionHeader title="Cash Flow" />
+            {financials.annualRevenueM !== undefined && (
+              <Row icon="trending_up" label="Annual Revenue" value={`$${financials.annualRevenueM}M`} />
+            )}
+            {financials.annualOpexM !== undefined && (
+              <Row icon="receipt_long" label="Annual OPEX" value={`$${financials.annualOpexM}M`} />
+            )}
+            {financials.annualDebtServiceM !== undefined && (
+              <Row icon="payments" label="Annual Debt Service" value={`$${financials.annualDebtServiceM}M`} />
+            )}
+            {dscrStr && (
+              <Row icon="analytics" label="DSCR" value={dscrStr} />
+            )}
+          </>
+        )}
+        {hasGapFunding && (
+          <>
+            <SectionHeader title="Gap Funding" />
+            <div className="flex items-center gap-4 px-6 py-3.5">
+              <span className="material-symbols-outlined text-outline text-[16px] shrink-0">volunteer_activism</span>
+              <dt className="text-caption text-on-surface-variant w-36 shrink-0">Eligible</dt>
+              <dd className="flex items-center gap-2">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide bg-secondary/10 text-secondary">Eligible</span>
+                {financials.gapFundingProgram && (
+                  <span className="text-caption text-on-surface font-medium">{financials.gapFundingProgram}</span>
+                )}
+              </dd>
+            </div>
+          </>
+        )}
       </dl>
     </div>
   )
@@ -299,6 +393,9 @@ export default async function ProjectDetailPage({
             </Link>
           ) : null}
           <PublishActions projectId={id} status={project.status} ptoStatus={ptoStatus} />
+          <FinancierActions projectId={id} projectStatus={project.status} />
+          <SAActions projectId={id} projectStatus={project.status} />
+          <PMActions projectId={id} projectStatus={project.status} />
         </div>
       </div>
 
@@ -375,16 +472,9 @@ export default async function ProjectDetailPage({
               </div>
             ) : (
               <div className="p-6 flex flex-col items-center text-center py-10">
-                <span className="material-symbols-outlined text-[32px] text-outline mb-3">sensors_off</span>
-                <p className="text-caption text-on-surface-variant mb-4">No telemetry configured yet</p>
-                {continueHref && (
-                  <Link
-                    href={`/onboard/telemetry?id=${id}`}
-                    className="text-label-caps text-primary hover:underline"
-                  >
-                    Configure now →
-                  </Link>
-                )}
+                <span className="material-symbols-outlined text-[32px] text-outline mb-3">construction</span>
+                <p className="text-caption font-semibold text-on-surface mb-1">Pre-commissioning</p>
+                <p className="text-caption text-on-surface-variant">Telemetry will be available after the project reaches commercial operation date (COD).</p>
               </div>
             )}
           </div>

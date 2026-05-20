@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Stepper } from '@/components/onboard/stepper'
 import { useAuth } from '@/components/auth/auth-context'
+import { cn } from '@/lib/utils'
 import type { DSCRYear, Project, RiskProfile, SavedQualificationGate } from '@/types'
 
 // ─── DSCR projection from real financials ────────────────────────────────────
@@ -117,6 +118,184 @@ function lqGate(lq: number): RiskProfile['gate'] {
   if (lq >= 0.80) return 'PASS'
   if (lq >= 0.60) return 'REVIEW'
   return 'FAIL'
+}
+
+// ─── Risk Provider Panel ─────────────────────────────────────────────────────
+
+const RISK_PROVIDERS = [
+  {
+    id: 'moodys',
+    name: "Moody's Analytics",
+    logo: 'analytics',
+    description: 'Infrastructure & project finance risk scoring',
+    turnaround: '5–7 business days',
+  },
+  {
+    id: 'sp_global',
+    name: 'S&P Global Risk',
+    logo: 'public',
+    description: 'Credit risk intelligence for energy assets',
+    turnaround: '7–10 business days',
+  },
+  {
+    id: 'kroll',
+    name: 'Kroll Credit Risk',
+    logo: 'shield',
+    description: 'Independent credit and valuation advisory',
+    turnaround: '5–8 business days',
+  },
+  {
+    id: 'fitch',
+    name: 'Fitch Ratings',
+    logo: 'verified',
+    description: 'Structured finance and renewable energy ratings',
+    turnaround: '10–14 business days',
+  },
+]
+
+function RiskProviderPanel({
+  projectId,
+  authToken,
+  existingRequest,
+  hasInternalScore,
+}: {
+  projectId: string
+  authToken: string | null
+  existingRequest?: import('@/types').ExternalRiskRequest
+  hasInternalScore: boolean
+}) {
+  const [selected, setSelected] = useState<string | null>(existingRequest?.provider ?? null)
+  const [submitting, setSubmitting] = useState(false)
+  const [submitted, setSubmitted] = useState(!!existingRequest)
+  const [submitError, setSubmitError] = useState<string | null>(null)
+
+  async function handleRequest() {
+    if (!selected || !projectId || !authToken) return
+    setSubmitting(true)
+    setSubmitError(null)
+    const externalRiskRequest: import('@/types').ExternalRiskRequest = {
+      provider: selected,
+      status: 'PENDING',
+      requestedAt: new Date().toISOString(),
+    }
+    try {
+      const res = await fetch(`/api/projects/${projectId}`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${authToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telemetry: { externalRiskRequest } }),
+      })
+      const json = await res.json()
+      if (json.ok) setSubmitted(true)
+      else setSubmitError(json.error?.message ?? 'Request failed')
+    } catch {
+      setSubmitError('Network error — please retry')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/60 shadow-card overflow-hidden">
+      <div className="px-6 pt-6 pb-4 border-b border-outline-variant/40 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <span className="material-symbols-outlined text-secondary text-[20px]">send_and_archive</span>
+          <div>
+            <h2 className="text-label-caps font-bold text-on-surface tracking-widest">EXTERNAL RISK SCORING</h2>
+            <p className="text-caption text-on-surface-variant mt-0.5">Request a third-party risk assessment to strengthen your credit pack</p>
+          </div>
+        </div>
+        {!hasInternalScore && (
+          <span className="text-[10px] bg-tertiary/10 text-tertiary font-bold px-2 py-1 rounded-full uppercase tracking-wide">
+            Recommended
+          </span>
+        )}
+      </div>
+
+      <div className="p-6 space-y-5">
+        {submitted ? (
+          <div className="flex items-start gap-4 bg-secondary/5 border border-secondary/20 rounded-xl px-5 py-4">
+            <span className="material-symbols-outlined text-secondary text-[22px] shrink-0 mt-0.5" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+            <div>
+              <p className="font-bold text-on-surface">Request submitted to {RISK_PROVIDERS.find(p => p.id === selected)?.name}</p>
+              <p className="text-caption text-on-surface-variant mt-0.5">
+                Status: <span className="font-bold text-secondary">PENDING</span> · You'll be notified when the assessment is complete.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => { setSubmitted(false); setSelected(null) }}
+              className="ml-auto text-caption text-on-surface-variant hover:text-on-surface transition-colors shrink-0"
+            >
+              Change
+            </button>
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {RISK_PROVIDERS.map(({ id, name, logo, description, turnaround }) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setSelected(id)}
+                  className={cn(
+                    'flex items-start gap-3 p-4 rounded-xl border-2 text-left transition-all',
+                    selected === id
+                      ? 'border-secondary bg-secondary-container/10'
+                      : 'border-outline-variant hover:border-secondary/40 bg-surface-container',
+                  )}
+                >
+                  <div className={cn(
+                    'w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-all',
+                    selected === id ? 'bg-secondary-container text-secondary' : 'bg-surface-container-high text-outline',
+                  )}>
+                    <span className="material-symbols-outlined text-[18px]">{logo}</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-caption font-bold text-on-surface">{name}</p>
+                    <p className="text-[11px] text-on-surface-variant mt-0.5">{description}</p>
+                    <p className="text-[10px] text-outline mt-1.5 font-medium">{turnaround}</p>
+                  </div>
+                  {selected === id && (
+                    <span className="material-symbols-outlined text-secondary text-[18px] shrink-0" style={{ fontVariationSettings: "'FILL' 1" }}>
+                      check_circle
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+
+            {submitError && (
+              <p className="text-caption text-error bg-error-container/30 px-4 py-3 rounded-lg">{submitError}</p>
+            )}
+
+            <div className="flex items-center justify-between pt-1">
+              <p className="text-caption text-on-surface-variant">
+                {selected ? `Selected: ${RISK_PROVIDERS.find(p => p.id === selected)?.name}` : 'Select a provider above'}
+              </p>
+              <button
+                type="button"
+                disabled={!selected || submitting}
+                onClick={handleRequest}
+                className="inline-flex items-center gap-2 bg-secondary text-on-secondary px-5 py-2.5 rounded-lg text-label-caps font-bold hover:opacity-90 transition-all shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {submitting ? (
+                  <>
+                    <span className="material-symbols-outlined text-[14px] animate-spin">progress_activity</span>
+                    Submitting…
+                  </>
+                ) : (
+                  <>
+                    <span className="material-symbols-outlined text-[14px]">send</span>
+                    Request Assessment
+                  </>
+                )}
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  )
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -268,7 +447,7 @@ export default function CreditPackPage() {
 
   return (
     <div className="py-gutter space-y-8 max-w-5xl">
-      <Stepper currentStep={4} projectId={id} />
+      <Stepper currentStep={4} projectId={id} skippedSteps={project && !project.telemetry?.apiEndpoint ? [3] : []} />
 
       <div>
         <h1 className="text-display-lg text-on-surface">Credit Pack</h1>
@@ -486,6 +665,14 @@ export default function CreditPackPage() {
           ))}
         </div>
       </div>
+
+      {/* External Risk Scoring */}
+      <RiskProviderPanel
+        projectId={id}
+        authToken={authToken}
+        existingRequest={project?.telemetry?.externalRiskRequest}
+        hasInternalScore={saved || !!project?.telemetry?.riskProfile}
+      />
 
       {/* Overall verdict */}
       <div className={`border rounded-xl p-5 flex items-start gap-4 ${

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/auth/auth-context'
 import type { PtoStatus } from '@/types'
 
@@ -13,6 +14,7 @@ const PTO_OPTIONS: { value: PtoStatus; label: string }[] = [
 
 export function PtoUpdater({ projectId, currentStatus }: { projectId: string; currentStatus: PtoStatus }) {
   const { user, token } = useAuth()
+  const router = useRouter()
   const [status, setStatus] = useState<PtoStatus>(currentStatus)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -31,7 +33,7 @@ export function PtoUpdater({ projectId, currentStatus }: { projectId: string; cu
         body: JSON.stringify({ ptoStatus: next }),
       })
       const json = await res.json()
-      if (json.ok) { setStatus(next); setSaved(true) }
+      if (json.ok) { setStatus(next); setSaved(true); router.refresh() }
       else setError(json.error?.message ?? 'Failed to update')
     } catch {
       setError('Network error')

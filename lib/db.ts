@@ -44,6 +44,7 @@ export interface DbProject {
   annual_revenue_m: number | null
   annual_opex_m: number | null
   annual_debt_service_m: number | null
+  quarterly_funding_ask_m: number | null
   gap_funding_eligible: boolean
   gap_funding_program: string | null
   asset_details: unknown
@@ -135,6 +136,7 @@ export async function insertProject(project: {
   annual_revenue_m?: number | null
   annual_opex_m?: number | null
   annual_debt_service_m?: number | null
+  quarterly_funding_ask_m?: number | null
   gap_funding_eligible?: boolean
   gap_funding_program?: string | null
   asset_details?: unknown
@@ -233,6 +235,7 @@ export async function updateProject(
     'annual_revenue_m',
     'annual_opex_m',
     'annual_debt_service_m',
+    'quarterly_funding_ask_m',
     'gap_funding_eligible',
     'gap_funding_program',
     'asset_details',
@@ -320,6 +323,26 @@ export async function updateOffer(
     .single()
   if (error || !data) return undefined
   return data as DbOffer
+}
+
+export async function getOffersByDeveloperUserId(
+  userId: string,
+): Promise<(DbOffer & { projectName: string; projectLocation: string })[]> {
+  const projects = await getProjectsByUserId(userId)
+  if (projects.length === 0) return []
+  const ids = projects.map(p => p.id)
+  const nameMap = new Map(projects.map(p => [p.id, { name: p.name ?? '', location: p.location ?? '' }]))
+  const { data, error } = await supabase
+    .from('project_offers')
+    .select('*')
+    .in('project_id', ids)
+    .order('created_at', { ascending: false })
+  if (error) throw new Error(error.message)
+  return (data ?? []).map(o => ({
+    ...(o as DbOffer),
+    projectName: nameMap.get(o.project_id)?.name ?? '',
+    projectLocation: nameMap.get(o.project_id)?.location ?? '',
+  }))
 }
 
 export async function expireStaleOffers(projectId: string): Promise<void> {

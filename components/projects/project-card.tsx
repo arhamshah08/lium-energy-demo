@@ -49,9 +49,9 @@ export function ProjectCard({ project }: { project: Project }) {
           )}>
             <span className="material-symbols-outlined text-[24px]">{assetIcon}</span>
           </div>
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 max-w-[160px]">
             <p className="text-label-caps text-on-surface-variant mb-1">{assetLabel}</p>
-            <h3 className="font-bold text-on-surface truncate leading-tight">{project.name}</h3>
+            <h3 className="font-bold text-on-surface leading-tight line-clamp-2 break-words">{project.name}</h3>
           </div>
           <StatusBadge status={project.status} />
         </div>
@@ -72,6 +72,12 @@ export function ProjectCard({ project }: { project: Project }) {
             <span className="material-symbols-outlined text-[14px] shrink-0">calendar_today</span>
             <span>{new Date(project.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
           </div>
+          {project.financials?.quarterlyFundingAskM != null && (
+            <div className="flex items-center gap-2 mt-1">
+              <span className="material-symbols-outlined text-[14px] text-secondary shrink-0">payments</span>
+              <span className="text-caption font-bold text-secondary">${project.financials.quarterlyFundingAskM}M / quarter</span>
+            </div>
+          )}
         </div>
 
         {/* Progress bar */}

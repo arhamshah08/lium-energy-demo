@@ -162,10 +162,15 @@ export function OfferInbox({ projectId, projectStatus }: { projectId: string; pr
       ) : active.length === 0 && history.length === 0 ? (
         <div className="bg-surface-container-lowest rounded-xl border border-outline-variant/60 p-8 text-center">
           <span className="material-symbols-outlined text-[36px] text-outline mb-3 block">inbox</span>
-          <p className="text-caption text-on-surface-variant">
-            {projectStatus === 'PUBLISHED_FOR_FINANCE'
-              ? 'No offers yet. Financiers can now see your project and submit term sheets.'
-              : 'No offers on this project.'}
+          <p className="text-body-base font-semibold text-on-surface mb-1">
+            {isFinancier ? 'No term sheets submitted yet' : 'No offers received yet'}
+          </p>
+          <p className="text-caption text-on-surface-variant max-w-xs mx-auto">
+            {isFinancier
+              ? 'Use the Submit Offer button to send a term sheet to the developer. They will review all offers and respond.'
+              : projectStatus === 'PUBLISHED_FOR_FINANCE'
+              ? 'Your project is live. Financiers can now discover it and submit term sheets directly to you.'
+              : 'Publish your project for financing to start receiving term sheets from financiers.'}
           </p>
         </div>
       ) : (

@@ -84,6 +84,14 @@ export async function PATCH(
       ...(t.conditionsPrecedent !== undefined && { conditions_precedent: t.conditionsPrecedent }),
       ...(t.expiresAt !== undefined && { expires_at: t.expiresAt }),
     })
+  } else if (body.action === 'withdraw') {
+    if (user.role !== 'financier' || offer.financier_id !== user.id) {
+      return NextResponse.json({ ok: false, error: { code: 'FORBIDDEN', message: 'Only the submitting financier can withdraw' } }, { status: 403 })
+    }
+    if (offer.status === 'ACCEPTED') {
+      return NextResponse.json({ ok: false, error: { code: 'INVALID_ACTION', message: 'Cannot withdraw an accepted offer' } }, { status: 400 })
+    }
+    await updateOffer(offerId, { status: 'WITHDRAWN' })
   } else {
     return NextResponse.json({ ok: false, error: { code: 'INVALID_ACTION', message: 'Unknown action' } }, { status: 400 })
   }

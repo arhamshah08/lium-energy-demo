@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { randomUUID } from 'crypto'
-import { getProjectsByUserId, getDiscoverableProjects, insertProject } from '@/lib/db'
+import { insertProject } from '@/lib/db'
 import { getUserFromHeader, dbToProject } from '@/lib/project-helpers'
+import { supabase } from '@/lib/supabase'
 import type { CreateProjectBody, Project, ApiResponse } from '@/types'
+
+const DISCOVERY_STATUSES = [
+  'COMING_SOON', 'SUBMITTED', 'ACTIVE',
+  'PUBLISHED_FOR_FINANCE', 'OFFER_RECEIVED', 'FINANCING_ACCEPTED',
+  'PUBLISHED_FOR_SA', 'TRANSACTING', 'TOKENISED',
+]
 
 export async function GET(req: NextRequest): Promise<NextResponse<ApiResponse<Project[]>>> {
   const user = getUserFromHeader(req.headers.get('Authorization'))
@@ -14,11 +21,21 @@ export async function GET(req: NextRequest): Promise<NextResponse<ApiResponse<Pr
   }
 
   const isDiscovery = ['financier', 'securitisation_agent', 'portfolio_manager', 'investor'].includes(user.role)
-  const rows = isDiscovery
-    ? await getDiscoverableProjects()
-    : await getProjectsByUserId(user.id)
 
-  return NextResponse.json({ ok: true, data: rows.map(dbToProject) })
+  const query = isDiscovery
+    ? supabase.from('projects').select('*').in('status', DISCOVERY_STATUSES).order('created_at', { ascending: false })
+    : supabase.from('projects').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
+
+  const { data, error } = await query
+
+  if (error) {
+    return NextResponse.json(
+      { ok: false, error: { code: 'DB_ERROR', message: error.message } },
+      { status: 500 },
+    )
+  }
+
+  return NextResponse.json({ ok: true, data: (data ?? []).map(dbToProject) })
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse<ApiResponse<Project>>> {
@@ -60,6 +77,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<ApiResponse<P
     annual_revenue_m: f.annualRevenueM ?? null,
     annual_opex_m: f.annualOpexM ?? null,
     annual_debt_service_m: f.annualDebtServiceM ?? null,
+    quarterly_funding_ask_m: f.quarterlyFundingAskM ?? null,
     gap_funding_eligible: f.gapFundingEligible ?? false,
     gap_funding_program: f.gapFundingProgram ?? null,
     asset_details: f.assetDetails ?? null,
