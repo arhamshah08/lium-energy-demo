@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getProjectById, updateProject } from '@/lib/db'
+import { getProjectById, getProfileById, updateProject } from '@/lib/db'
 import { getUserFromHeader, dbToProject } from '@/lib/project-helpers'
+import { publishEnergyAssetCatalog } from '@/lib/beckn-catalog'
 import type { ApiResponse, Project, PublishProjectBody } from '@/types'
 
 export async function POST(
@@ -36,6 +37,12 @@ export async function POST(
     }
     const updated = await updateProject(id, { status: 'PUBLISHED_FOR_FINANCE', updated_at: now }, user.id)
     if (!updated) return NextResponse.json({ ok: false, error: { code: 'NOT_FOUND', message: 'Project not found' } }, { status: 404 })
+
+    // Fire-and-forget: publish Beckn catalog to DeDi registry
+    getProfileById(user.id)
+      .then(profile => { if (profile) publishEnergyAssetCatalog(row, profile) })
+      .catch(e => console.error('[Beckn] catalog publish failed:', e))
+
     return NextResponse.json({ ok: true, data: dbToProject(updated) })
   }
 
