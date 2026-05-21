@@ -59,11 +59,11 @@ async function createDediSubscriberRecord(
   country: string | null,
   publicKeyBase64: string,
   role: string,
+  type: 'BAP' | 'BPP',
 ): Promise<string | null> {
   try {
     const registryName = buildRegistryName(companyName, fullName, role)
     const countries = ['USA']
-    const type = (role === 'financier' || role === 'securitisation_agent') ? 'BAP' : 'BPP'
     const companyBase = (companyName || fullName).toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '')
     const recordName = `${companyBase}-${type}`
     const subscriberId = `${registryName}.lium.beckn.io`
@@ -176,23 +176,39 @@ export async function POST(req: NextRequest) {
   // Step 1 — create registry for all roles
   const registryId = await createDediRegistry(companyName, fullName, role)
 
-  // Step 2 — developer only: generate Ed25519 keypair + publish BPP subscriber record
   let signingPublicKey: string | null = null
   let signingPrivateKey: string | null = null
   let becknRecordId: string | null = null
+  let becknBppRecordId: string | null = null
   let participantsRecordId: string | null = null
 
-  if (role === 'developer' || role === 'financier' || role === 'securitisation_agent') {
+  const needsRecord = ['developer', 'financier', 'securitisation_agent', 'portfolio_manager'].includes(role)
+
+  if (needsRecord) {
     // Wait for DeDi registry to be ready before publishing records
     await new Promise(resolve => setTimeout(resolve, 3000))
 
-    // Step 2 — generate Ed25519 keypair + publish subscriber record
     const { publicKeyBase64, privateKeyBase64 } = generateEd25519KeyPair()
     signingPublicKey = publicKeyBase64
     signingPrivateKey = privateKeyBase64
-    becknRecordId = await createDediSubscriberRecord(userId, companyName, fullName, country, publicKeyBase64, role)
 
-    // Step 3 — add entry to central participants index
+    // Determine BAP/BPP per role:
+    // developer → BPP (publishes assets)
+    // financier → BAP (discovers developer projects)
+    // securitisation_agent → BAP (receives from developer) + BPP (publishes to PM)
+    // portfolio_manager → BAP (discovers SA catalog)
+    if (role === 'developer') {
+      becknRecordId = await createDediSubscriberRecord(userId, companyName, fullName, country, publicKeyBase64, role, 'BPP')
+    } else if (role === 'financier') {
+      becknRecordId = await createDediSubscriberRecord(userId, companyName, fullName, country, publicKeyBase64, role, 'BAP')
+    } else if (role === 'securitisation_agent') {
+      becknRecordId    = await createDediSubscriberRecord(userId, companyName, fullName, country, publicKeyBase64, role, 'BAP')
+      becknBppRecordId = await createDediSubscriberRecord(userId, companyName, fullName, country, publicKeyBase64, role, 'BPP')
+    } else if (role === 'portfolio_manager') {
+      becknRecordId = await createDediSubscriberRecord(userId, companyName, fullName, country, publicKeyBase64, role, 'BAP')
+    }
+
+    // Add entry to central participants index for all roles that get a record
     participantsRecordId = await createDediParticipantsRecord(userId, companyName, fullName, role)
   }
 
@@ -211,6 +227,7 @@ export async function POST(req: NextRequest) {
     signing_public_key: signingPublicKey,
     signing_private_key: signingPrivateKey,
     beckn_record_id: becknRecordId,
+    beckn_bpp_record_id: becknBppRecordId,
     participants_record_id: participantsRecordId,
   })
 

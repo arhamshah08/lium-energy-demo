@@ -18,6 +18,7 @@ export interface DbProfile {
   signing_public_key: string | null
   signing_private_key: string | null
   beckn_record_id: string | null
+  beckn_bpp_record_id: string | null
   participants_record_id: string | null
   created_at: string
 }
