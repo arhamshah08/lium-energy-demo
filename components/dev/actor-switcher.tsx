@@ -19,8 +19,6 @@ export function DevActorSwitcher() {
   const { user, signIn } = useAuth()
   const router = useRouter()
 
-  if (process.env.NODE_ENV === 'production') return null
-
   const currentActor = ACTORS.find(a => a.role === user?.role)
 
   async function switchTo(role: string) {

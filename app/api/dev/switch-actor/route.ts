@@ -37,10 +37,6 @@ const DEV_ACTORS: Record<string, { id: string; email: string; fullName: string; 
 }
 
 export async function POST(req: NextRequest) {
-  if (process.env.NODE_ENV === 'production') {
-    return NextResponse.json({ error: 'Not available in production' }, { status: 403 })
-  }
-
   const { role } = await req.json()
   const actor = DEV_ACTORS[role]
 
