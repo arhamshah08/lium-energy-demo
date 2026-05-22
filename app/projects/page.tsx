@@ -169,7 +169,7 @@ export default function ProjectsPage() {
 
   useEffect(() => {
     if (!user || !token) return
-    if (!['financier', 'securitisation_agent', 'portfolio_manager'].includes(user.role)) return
+    if (!['developer', 'financier', 'securitisation_agent', 'portfolio_manager'].includes(user.role)) return
     const interval = setInterval(loadAll, 5000)
     return () => clearInterval(interval)
   }, [user, token, loadAll])
